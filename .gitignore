@@ -1,2 +1,8 @@
 cross/
 activateccenv
+*.elf
+*.o
+*.out
+.cache/
+compile_commands.json
+log.txt
