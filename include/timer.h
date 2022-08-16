@@ -23,4 +23,6 @@ void timer_disable();
  * */
 void timer_write_tval(uint32_t tval);
 
+uint64_t timer_read_systemcounter();
+
 #endif

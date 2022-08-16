@@ -1,7 +1,9 @@
-#include "gic.h"
-#include "timer.h"
-#include "uart.h"
+#include <gic.h>
+#include <timer.h>
+#include <uart.h>
+
 #include <exceptions.h>
+#include <stddef.h>
 #include <stdint.h>
 
 void exceptions_distributor()
@@ -12,10 +14,13 @@ void exceptions_distributor()
 
 void exceptions_handle_fiq()
 {
-	put_string("FIQ!\n");
 	int intid = gic_interface_read_and_ack_group0();
-	if (intid == 30)
-		timer_disable();
+	Handler* handler = gic_redistributor_get_handler(intid);
+	if (handler != NULL) {
+		handler(intid);
+	} else {
+		put_string("Unhandled interrupt\n");
+	}
 	gic_interface_end_of_interrupt_group0(intid);
 }
 

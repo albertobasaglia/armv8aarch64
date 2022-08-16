@@ -10,7 +10,10 @@ AS = aarch64-none-elf-as
 BUILD_OBJS = timer/timer.o \
 	     uart.o \
 	     gic/gic.o \
-	     exceptions/exceptions.o
+	     exceptions/exceptions.o \
+	     alloc/slab.o \
+	     string.o \
+	     log.o
 
 all: kernel.elf
 

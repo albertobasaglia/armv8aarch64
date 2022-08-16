@@ -1,6 +1,11 @@
+#include "slab.h"
 #include <gic.h>
 
 #include <stdint.h>
+
+#define MAX_INTS 1024
+
+static Handler* handlers[MAX_INTS];
 
 void gic_distributor_enable()
 {
@@ -96,4 +101,26 @@ void gic_interface_end_of_interrupt_group1(uint32_t intid)
 {
 	uint64_t reg = intid & 0xffffff;
 	asm volatile("msr ICC_EOIR1_EL1, %0" ::"r"(reg));
+}
+
+void gic_redistributor_set_handler(int intid, Handler* handler)
+{
+	if (intid < 0 || intid > MAX_INTS)
+		return;
+
+	handlers[intid] = handler;
+}
+
+Handler* gic_redistributor_get_handler(int intid)
+{
+	if (intid < 0 || intid > MAX_INTS)
+		return NULL;
+
+	return handlers[intid];
+}
+
+void gic_redistributor_erase_handlers()
+{
+	for (int i = 0; i < MAX_INTS; i++)
+		handlers[i] = NULL;
 }

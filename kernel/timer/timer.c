@@ -31,3 +31,10 @@ void timer_write_tval(uint32_t tval)
 	uint64_t write_value = tval;
 	asm volatile("msr CNTP_TVAL_EL0, %0" ::"r"(write_value));
 }
+
+uint64_t timer_read_systemcounter()
+{
+	uint64_t cntpct;
+	asm volatile("mrs %0, CNTPCT_EL0" : "=r"(cntpct));
+	return cntpct;
+}

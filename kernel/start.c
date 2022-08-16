@@ -1,3 +1,4 @@
+#include "log.h"
 #include <gic.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -34,16 +35,20 @@ void get_vbar_el1()
 	asm volatile("mrs %0, VBAR_EL1" : "=r"(vbar_el1));
 }
 
+void handle_timer_int(int id)
+{
+	timer_disable();
+}
+
 void enable_gic()
 {
-	put_string("Activating GICC\n");
 	gic_distributor_enable();
 	gic_redistributor_wake();
 	gic_interface_init();
 	gic_interface_enablegroups();
 	gic_interface_setprioritymask(0xff);
 	gic_redistributor_enable_id(30);
-	put_string("Activated GICC\n");
+	gic_redistributor_set_handler(30, handle_timer_int);
 }
 
 void set_vbar_el1()
@@ -62,7 +67,7 @@ void start()
 		     "and x0, x0, %0\n"
 		     "msr DAIF, x0" ::"r"(flags)
 		     : "x0");
-	put_string("Kernel started!\n");
+	klog("Kernel started");
 	enable_gic();
 
 	timer_write_tval(timer_getfrequency());
@@ -73,7 +78,5 @@ void start()
 	/* 	     "msr ELR_EL1, x1\n" */
 	/* 	     "eret" ::"r"(user) */
 	/* 	     : "x1"); */
-	put_string("Kernel finished!\n");
-	char* ciao = (char*)0x17271271271;
-	*ciao = 'a';
+	klog("Kernel finished");
 }
