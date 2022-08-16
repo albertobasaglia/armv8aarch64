@@ -52,4 +52,12 @@ void gic_interface_setprioritymask(uint8_t pmr);
  * */
 void gic_interface_enablegroups();
 
+uint32_t gic_interface_read_and_ack_group0();
+
+uint32_t gic_interface_read_and_ack_group1();
+
+void gic_interface_end_of_interrupt_group0(uint32_t intid);
+
+void gic_interface_end_of_interrupt_group1(uint32_t intid);
+
 #endif

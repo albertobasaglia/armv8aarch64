@@ -17,6 +17,15 @@ void timer_enable()
 		     : "x0");
 }
 
+void timer_disable()
+{
+	uint64_t mask_but_enable_bit = ~(1 << 0);
+	asm volatile("mrs x0, CNTP_CTL_EL0\n"
+		     "and x0, x0, %0\n"
+		     "msr CNTP_CTL_EL0, x0" ::"r"(mask_but_enable_bit)
+		     : "x0");
+}
+
 void timer_write_tval(uint32_t tval)
 {
 	uint64_t write_value = tval;

@@ -14,6 +14,11 @@ uint32_t timer_getfrequency();
 void timer_enable();
 
 /*
+ * Disables the generic timer
+ * */
+void timer_disable();
+
+/*
  * Writes the TVAL for the timer
  * */
 void timer_write_tval(uint32_t tval);

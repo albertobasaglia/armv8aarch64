@@ -1,8 +1,8 @@
-#include "gic.h"
-#include "timer.h"
-#include "uart.h"
+#include <gic.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <timer.h>
+#include <uart.h>
 
 extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
@@ -54,6 +54,8 @@ void set_vbar_el1()
 void start()
 {
 	set_vbar_el1();
+
+	// disable FIQ masking
 	uint64_t flags = (1 << 6) | (1 << 7);
 	flags = ~flags;
 	asm volatile("mrs x0, DAIF\n"
@@ -62,7 +64,6 @@ void start()
 		     : "x0");
 	put_string("Kernel started!\n");
 	enable_gic();
-	put_string("Kernel finished!\n");
 
 	timer_write_tval(timer_getfrequency());
 	timer_enable();
@@ -72,4 +73,7 @@ void start()
 	/* 	     "msr ELR_EL1, x1\n" */
 	/* 	     "eret" ::"r"(user) */
 	/* 	     : "x1"); */
+	put_string("Kernel finished!\n");
+	char* ciao = (char*)0x17271271271;
+	*ciao = 'a';
 }

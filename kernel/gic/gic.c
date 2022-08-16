@@ -71,3 +71,29 @@ void gic_interface_init()
 	asm volatile("mov x0, #1\n"
 		     "msr ICC_SRE_EL1, x0");
 }
+
+uint32_t gic_interface_read_and_ack_group0()
+{
+	uint64_t iar;
+	asm volatile("mrs %0, ICC_IAR0_EL1" : "=r"(iar));
+	return iar & 0xffffff;
+}
+
+uint32_t gic_interface_read_and_ack_group1()
+{
+	uint64_t iar;
+	asm volatile("mrs %0, ICC_IAR1_EL1" : "=r"(iar));
+	return iar & 0xffffff;
+}
+
+void gic_interface_end_of_interrupt_group0(uint32_t intid)
+{
+	uint64_t reg = intid & 0xffffff;
+	asm volatile("msr ICC_EOIR0_EL1, %0" ::"r"(reg));
+}
+
+void gic_interface_end_of_interrupt_group1(uint32_t intid)
+{
+	uint64_t reg = intid & 0xffffff;
+	asm volatile("msr ICC_EOIR1_EL1, %0" ::"r"(reg));
+}

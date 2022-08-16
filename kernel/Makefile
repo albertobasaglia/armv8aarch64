@@ -1,4 +1,4 @@
-CFLAGS = -ffreestanding -fno-builtin -fno-builtin-function -mcpu=cortex-a53 \
+CFLAGS = -g -ffreestanding -fno-builtin -fno-builtin-function -mcpu=cortex-a53 \
 	 -I../include/
 # ASFLAGS =
 LDFLAGS = -T linker.ld
@@ -9,7 +9,8 @@ AS = aarch64-none-elf-as
 
 BUILD_OBJS = timer/timer.o \
 	     uart.o \
-	     gic/gic.o
+	     gic/gic.o \
+	     exceptions/exceptions.o
 
 all: kernel.elf
 
@@ -29,4 +30,4 @@ start.o: start.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f _start.o start.o _exceptions.o kernel.elf
+	rm -f _start.o start.o _exceptions.o $(BUILD_OBJS) kernel.elf

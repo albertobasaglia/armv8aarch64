@@ -20,15 +20,16 @@ message: .asciz "Ciao!\n"
 //current_level_elx
 // SYNC
 .balign 0x80
-        b .
+        bl exceptions_distributor
+        eret
 // IRQ
 .balign 0x80
         b .
 // FIQ
 .balign 0x80
-        ldr x0, =message
-        bl put_string
-        b .
+excbreak:
+        bl exceptions_handle_fiq
+        eret
 // SERROR
 .balign 0x80
         b .
