@@ -1,14 +1,8 @@
+#include "gic.h"
 #include "timer.h"
 #include "uart.h"
 #include <stddef.h>
 #include <stdint.h>
-
-#define GIC_DIST       0x08000000
-
-#define GIC_CPU        0x08010000
-
-#define GIC_REDIST     0x080a0000
-#define GIC_REDIST_SGI 0x080b0000
 
 extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
@@ -42,51 +36,13 @@ void get_vbar_el1()
 
 void enable_gic()
 {
-	uint32_t ctrl = 0;
-	volatile uint32_t* GICD_CTRL = (uint32_t*)GIC_DIST + 0x0;
-	ctrl |= (1 << 4); // ARE (Affinity Register Enable)
-	*GICD_CTRL = ctrl;
-
-	ctrl |= (1 << 2);
-	ctrl |= (1 << 1);
-	ctrl |= (1 << 0);
-	*GICD_CTRL = ctrl;
-
-	volatile uint32_t* GICR_WAKER = (uint32_t*)(GIC_REDIST + 0x14);
-	*GICR_WAKER &= ~(1 << 1);
-
-	while (*GICR_WAKER & (1 << 2))
-		;
-
 	put_string("Activating GICC\n");
-
-	volatile uint32_t* GICD_ISENABLER0 = (uint32_t*)(GIC_DIST + 0x100);
-	volatile uint32_t* GICD_ISPENDR0 = (uint32_t*)(GIC_DIST + 0x200);
-	volatile uint32_t* GICD_ISACTIVER0 = (uint32_t*)(GIC_DIST + 0x300);
-
-	volatile uint32_t* GICR_ISENABLER0 = (uint32_t*)(GIC_REDIST_SGI +
-							 0x100);
-
-	// enable interrupt ID30
-	*GICR_ISENABLER0 |= (1 << 30);
-
-	// enable
-	asm volatile("mov x0, #1\n"
-		     "msr ICC_SRE_EL1, x0");
-
-	// set binary point register
-	asm volatile("mov x0, #0\n"
-		     "msr ICC_BPR0_EL1, x0\n"
-		     "msr ICC_BPR1_EL1, x0");
-	// set priority max register to 0xff (lowest possible)
-	asm volatile("mov x0, #0xff\n"
-		     "msr ICC_PMR_EL1, x0");
-
-	// enable groups 1 and 0
-	asm volatile("mov x0, #1\n"
-		     "msr ICC_IGRPEN0_EL1, x0\n"
-		     "msr ICC_IGRPEN1_EL1, x0");
-
+	gic_distributor_enable();
+	gic_redistributor_wake();
+	gic_interface_init();
+	gic_interface_enablegroups();
+	gic_interface_setprioritymask(0xff);
+	gic_redistributor_enable_id(30);
 	put_string("Activated GICC\n");
 }
 
@@ -107,8 +63,6 @@ void start()
 	put_string("Kernel started!\n");
 	enable_gic();
 	put_string("Kernel finished!\n");
-	/* set_el0_sp(); */
-	/* get_vbar_el1(); */
 
 	timer_write_tval(timer_getfrequency());
 	timer_enable();

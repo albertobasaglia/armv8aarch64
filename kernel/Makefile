@@ -8,7 +8,8 @@ LD = aarch64-none-elf-ld
 AS = aarch64-none-elf-as
 
 BUILD_OBJS = timer/timer.o \
-	     uart.o
+	     uart.o \
+	     gic/gic.o
 
 all: kernel.elf
 
