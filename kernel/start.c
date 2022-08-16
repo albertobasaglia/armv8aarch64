@@ -71,7 +71,7 @@ void enable_gic()
 {
 	uint32_t ctrl = 0;
 	volatile uint32_t* GICD_CTRL = (uint32_t*)GIC_DIST + 0x0;
-	ctrl |= (1 << 4); // ARE
+	ctrl |= (1 << 4); // ARE (Affinity Register Enable)
 	*GICD_CTRL = ctrl;
 
 	ctrl |= (1 << 2);
@@ -94,25 +94,25 @@ void enable_gic()
 	volatile uint32_t* GICR_ISENABLER0 = (uint32_t*)(GIC_REDIST_SGI +
 							 0x100);
 
-	*GICR_ISENABLER0 |= (1 << 30); // THIS MADE IT WORK!!!
+	// enable interrupt ID30
+	*GICR_ISENABLER0 |= (1 << 30);
 
-	// TODO this causes a data abort!
-	/* volatile uint32_t* GICC_CTRL = (uint32_t*)(GIC_CPU + 0x0); */
-	/* *GICC_CTRL |= (0b11); */
-
+	// enable
 	asm volatile("mov x0, #1\n"
 		     "msr ICC_SRE_EL1, x0");
 
+	// set binary point register
 	asm volatile("mov x0, #0\n"
 		     "msr ICC_BPR0_EL1, x0\n"
 		     "msr ICC_BPR1_EL1, x0");
+	// set priority max register to 0xff (lowest possible)
+	asm volatile("mov x0, #0xff\n"
+		     "msr ICC_PMR_EL1, x0");
 
+	// enable groups 1 and 0
 	asm volatile("mov x0, #1\n"
 		     "msr ICC_IGRPEN0_EL1, x0\n"
 		     "msr ICC_IGRPEN1_EL1, x0");
-
-	asm volatile("mov x0, #0xff\n"
-		     "msr ICC_PMR_EL1, x0");
 
 	putstring("Activated GICC\n");
 }
