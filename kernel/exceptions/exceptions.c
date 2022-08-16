@@ -10,6 +10,8 @@ void exceptions_distributor()
 {
 	put_string("Distributor!\n");
 	uint64_t esr = exceptions_getesr();
+	while (1)
+		;
 }
 
 void exceptions_handle_fiq()

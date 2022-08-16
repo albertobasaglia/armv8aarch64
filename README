@@ -1,1 +1,10 @@
 Some tests on ARMv8 AArch64
+
+TODO:
+- integer print
+- float print (how?)
+- better kernel log (with time)
+- kernel memory manager
+- paging
+- elf loading
+- usermode
