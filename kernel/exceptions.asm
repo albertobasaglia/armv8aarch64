@@ -27,7 +27,7 @@ message: .asciz "Ciao!\n"
 // FIQ
 .balign 0x80
         ldr x0, =message
-        bl putstring
+        bl put_string
         b .
 // SERROR
 .balign 0x80

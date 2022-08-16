@@ -1,14 +1,14 @@
+#include "timer.h"
+#include "uart.h"
 #include <stddef.h>
 #include <stdint.h>
 
-#define UART_BASEADDRESS 0x09000000
+#define GIC_DIST       0x08000000
 
-#define GIC_DIST         0x08000000
+#define GIC_CPU        0x08010000
 
-#define GIC_CPU          0x08010000
-
-#define GIC_REDIST       0x080a0000
-#define GIC_REDIST_SGI   0x080b0000
+#define GIC_REDIST     0x080a0000
+#define GIC_REDIST_SGI 0x080b0000
 
 extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
@@ -20,36 +20,9 @@ int get_current_el()
 	return (CurrentEL >> 2) & 0b11;
 }
 
-void putchar(char c)
-{
-	static char* dest = (char*)UART_BASEADDRESS;
-	*dest = c;
-}
-
-void putstring(char* str)
-{
-	while (*str != 0) {
-		putchar(*str);
-		str++;
-	}
-}
-
-void timer_test()
-{
-	size_t freq;
-	asm volatile("mrs %0, CNTFRQ_EL0\n" : "=r"(freq));
-
-	asm volatile("msr CNTP_TVAL_EL0, %0" ::"r"(freq));
-
-	// enable timer
-	asm volatile("mrs x0, CNTP_CTL_EL0\n"
-		     "orr x0, x0, #0b1\n"
-		     "msr CNTP_CTL_EL0, x0");
-}
-
 void user()
 {
-	putstring("I'm in usermode!\n");
+	put_string("I'm in usermode\n");
 	while (1)
 		;
 }
@@ -85,7 +58,7 @@ void enable_gic()
 	while (*GICR_WAKER & (1 << 2))
 		;
 
-	putstring("Activating GICC\n");
+	put_string("Activating GICC\n");
 
 	volatile uint32_t* GICD_ISENABLER0 = (uint32_t*)(GIC_DIST + 0x100);
 	volatile uint32_t* GICD_ISPENDR0 = (uint32_t*)(GIC_DIST + 0x200);
@@ -114,7 +87,7 @@ void enable_gic()
 		     "msr ICC_IGRPEN0_EL1, x0\n"
 		     "msr ICC_IGRPEN1_EL1, x0");
 
-	putstring("Activated GICC\n");
+	put_string("Activated GICC\n");
 }
 
 void set_vbar_el1()
@@ -131,13 +104,15 @@ void start()
 		     "and x0, x0, %0\n"
 		     "msr DAIF, x0" ::"r"(flags)
 		     : "x0");
-	putstring("Kernel started!\n");
+	put_string("Kernel started!\n");
 	enable_gic();
-	putstring("Kernel finished!\n");
+	put_string("Kernel finished!\n");
 	/* set_el0_sp(); */
 	/* get_vbar_el1(); */
 
-	timer_test();
+	timer_write_tval(timer_getfrequency());
+	timer_enable();
+
 	// jump to usermode:
 	/* asm volatile("mov x1, %0\n" */
 	/* 	     "msr ELR_EL1, x1\n" */
