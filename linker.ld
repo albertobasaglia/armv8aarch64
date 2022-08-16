@@ -2,6 +2,9 @@ ENTRY(_start)
 
 SECTIONS
 {
+        . = 0x40000000;
+        EXCEPTION_TABLE = .;
+        .exceptions_table : {_exceptions.o(.text)}
         . = 0x50000000;
 
         .text : {*(.text)}

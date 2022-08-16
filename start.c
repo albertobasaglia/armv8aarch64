@@ -11,6 +11,7 @@
 #define GIC_REDIST_SGI   0x080b0000
 
 extern char USERSTACK_END;
+extern char EXCEPTION_TABLE;
 
 int get_current_el()
 {
@@ -49,7 +50,6 @@ void timer_test()
 void user()
 {
 	putstring("I'm in usermode!\n");
-	asm volatile("svc 17");
 	while (1)
 		;
 }
@@ -115,12 +115,16 @@ void enable_gic()
 		     "msr ICC_PMR_EL1, x0");
 
 	putstring("Activated GICC\n");
+}
 
-	*GICD_ISENABLER0 |= (1 << 30);
+void set_vbar_el1()
+{
+	asm volatile("msr VBAR_EL1, %0" ::"r"(&EXCEPTION_TABLE));
 }
 
 void start()
 {
+	set_vbar_el1();
 	uint64_t flags = (1 << 6) | (1 << 7);
 	flags = ~flags;
 	asm volatile("mrs x0, DAIF\n"
@@ -133,10 +137,10 @@ void start()
 	/* set_el0_sp(); */
 	/* get_vbar_el1(); */
 
+	timer_test();
 	// jump to usermode:
 	/* asm volatile("mov x1, %0\n" */
 	/* 	     "msr ELR_EL1, x1\n" */
 	/* 	     "eret" ::"r"(user) */
 	/* 	     : "x1"); */
-	timer_test();
 }
