@@ -1,9 +1,9 @@
 Some tests on ARMv8 AArch64
 
 TODO:
-- integer print
+- integer print (DONE)
 - float print (how?)
-- better kernel log (with time)
+- better kernel log (with time) (DONE)
 - kernel memory manager
 - paging
 - elf loading

@@ -5,10 +5,9 @@ SECTIONS
         . = 0x40000000;
         EXCEPTION_TABLE = .;
         .exceptions_table : {_exceptions.o(.text)}
-        . = 0x41000000;
-        GIC_SLAB_START = .;
-        . = 0x41100000;
-        GIC_SLAB_END = .;
+
+        . = 0x40100000;
+        HEAP_START = .;
 
 
 

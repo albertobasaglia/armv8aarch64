@@ -1,12 +1,17 @@
-#include "log.h"
-#include <gic.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <gic.h>
+#include <heap.h>
+#include <log.h>
 #include <timer.h>
 #include <uart.h>
 
 extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
+extern char HEAP_START;
+
+struct heap main_heap;
 
 int get_current_el()
 {
@@ -57,9 +62,21 @@ void set_vbar_el1()
 	asm volatile("msr VBAR_EL1, %0" ::"r"(&EXCEPTION_TABLE));
 }
 
+void setup_heap()
+{
+	int heap_size_blocks = 256; // 1MB
+	size_t table_address = (size_t)&HEAP_START;
+	size_t heap_address = table_address + heap_table_size(heap_size_blocks);
+	main_heap = heap_createtable((char*)heap_address, (char*)table_address,
+				     heap_size_blocks);
+	klogf("Created table at %q", table_address);
+	klogf("Created heap at %q", heap_address);
+}
+
 void start()
 {
 	set_vbar_el1();
+	setup_heap();
 
 	// disable FIQ masking
 	uint64_t flags = (1 << 6) | (1 << 7);

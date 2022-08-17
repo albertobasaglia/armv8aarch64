@@ -12,6 +12,7 @@ BUILD_OBJS = timer/timer.o \
 	     gic/gic.o \
 	     exceptions/exceptions.o \
 	     alloc/slab.o \
+	     alloc/heap.o \
 	     string.o \
 	     log.o
 
