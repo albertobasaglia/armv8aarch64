@@ -25,4 +25,9 @@ void timer_write_tval(uint32_t tval);
 
 uint64_t timer_read_systemcounter();
 
+/*
+ * Get system counter value in micro-seconds
+ * */
+uint64_t timer_read_systemcounter_usec();
+
 #endif

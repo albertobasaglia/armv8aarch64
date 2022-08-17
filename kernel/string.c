@@ -89,3 +89,17 @@ void* memset(void* str, int c, size_t n)
 	}
 	return str;
 }
+
+void strrev(char* str)
+{
+	int len = strlen(str);
+	int left = 0;
+	int right = len - 1;
+	while (left < right) {
+		char swap = str[left];
+		str[left] = str[right];
+		str[right] = swap;
+		left++;
+		right--;
+	}
+}

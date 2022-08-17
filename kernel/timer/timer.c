@@ -1,3 +1,4 @@
+#include "log.h"
 #include <stdint.h>
 #include <timer.h>
 
@@ -37,4 +38,11 @@ uint64_t timer_read_systemcounter()
 	uint64_t cntpct;
 	asm volatile("mrs %0, CNTPCT_EL0" : "=r"(cntpct));
 	return cntpct;
+}
+
+uint64_t timer_read_systemcounter_usec()
+{
+	uint64_t val = timer_read_systemcounter();
+	uint64_t freq_usec = timer_getfrequency() / 1000000;
+	return val / freq_usec;
 }

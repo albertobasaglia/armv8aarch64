@@ -37,7 +37,8 @@ void get_vbar_el1()
 
 void handle_timer_int(int id)
 {
-	timer_disable();
+	klog("Ack TIMER");
+	timer_write_tval(timer_getfrequency());
 }
 
 void enable_gic()
@@ -73,10 +74,6 @@ void start()
 	timer_write_tval(timer_getfrequency());
 	timer_enable();
 
-	// jump to usermode:
-	/* asm volatile("mov x1, %0\n" */
-	/* 	     "msr ELR_EL1, x1\n" */
-	/* 	     "eret" ::"r"(user) */
-	/* 	     : "x1"); */
 	klog("Kernel finished");
+	uint64_t cnt_end = timer_read_systemcounter();
 }
