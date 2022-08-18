@@ -84,19 +84,10 @@ void enable_paging_test()
 	}
 
 	// Setup the registers
-	uint64_t tcr_ips = 0b10;
-	tcr_ips = tcr_ips << 32;
-	tcr_ips |= 32;
-	asm volatile("mrs x0, TCR_EL1\n"
-		     "orr x0, x0, %0\n"
-		     "msr TCR_EL1, x0" ::"r"(tcr_ips)
-		     : "x0");
 
-	asm volatile("msr TTBR0_EL1, %0\n"
-		     "mrs x0, SCTLR_EL1\n"
-		     "orr x0, x0, #1\n"
-		     "msr SCTLR_EL1, x0" ::"r"(l1)
-		     : "x0");
+	paging_set_tcr();
+	paging_set_ttbr0((uint64_t)l1);
+	paging_enable();
 
 	// Try to break it
 

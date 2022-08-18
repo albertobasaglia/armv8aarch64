@@ -18,8 +18,31 @@
 #define PAGING_AF                      (1 << 10)
 #define PAGING_nG                      (1 << 11)
 
+/*
+ * Returns an entry pointing to a block for a level 0, 1 or 2.
+ * */
 uint64_t paging_l012_create_entry_block(uint64_t block_address, int level);
 
+/*
+ * Returns an entry pointing to a table for a level 0, 1 or 2.
+ * */
 uint64_t paging_l012_create_entry_table(uint64_t table_address);
+
+/*
+ * Sets the TTBR0 register
+ * */
+void paging_set_ttbr0(uint64_t table_address);
+
+/*
+ * Sets the TCR register
+ *
+ * TODO parametrize
+ * */
+void paging_set_tcr();
+
+/*
+ * Enables paging
+ * */
+void paging_enable();
 
 #endif
