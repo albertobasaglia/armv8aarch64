@@ -37,14 +37,17 @@ int sprintf_internal(char* str, const char* format, va_list vars)
 	while (*format != 0) {
 		if (*format == '%') {
 			char type = format[1];
+			int base = 10;
 			if (!type) {
 				// no next element to format
 				return -1;
 			}
 			switch (type) {
+			case 'x':
+				base = 16;
 			case 'q': {
 				uint64_t num = va_arg(vars, uint64_t);
-				uint64_to_string(buffer, num, 10);
+				uint64_to_string(buffer, num, base);
 				int inserted = strlen(buffer);
 				strcat(str, buffer);
 				format += 2;

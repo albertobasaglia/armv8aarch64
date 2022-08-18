@@ -1,3 +1,4 @@
+#include "log.h"
 #include <gic.h>
 #include <timer.h>
 #include <uart.h>
@@ -8,10 +9,15 @@
 
 void exceptions_distributor()
 {
-	put_string("Distributor!\n");
 	uint64_t esr = exceptions_getesr();
-	while (1)
-		;
+	uint64_t ec = (esr >> ESR_EC_OFFSET) & ESR_EC_MASK;
+	if (ec == ESR_EC_DATABT_SAME) {
+		klog("Data abort from same EL");
+	} else if (ec == ESR_EC_DATABT_LOWER) {
+		klog("Data abort from lower EL");
+	} else {
+		klog("Unhandled abort!");
+	}
 }
 
 void exceptions_handle_fiq()

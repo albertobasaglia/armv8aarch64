@@ -69,8 +69,50 @@ void setup_heap()
 	size_t heap_address = table_address + heap_table_size(heap_size_blocks);
 	main_heap = heap_createtable((char*)heap_address, (char*)table_address,
 				     heap_size_blocks);
-	klogf("Created table at %q", table_address);
-	klogf("Created heap at %q", heap_address);
+	klogf("Created table at %x", table_address);
+	klogf("Created heap at %x", heap_address);
+}
+
+void enable_paging_test()
+{
+	// 0b010 40 bits, 1TB.
+	// 0b101 48 bits, 256TB
+
+	uint64_t tcr_ips = 0b10; // 1TB output address!
+	tcr_ips = tcr_ips << 32;
+
+	tcr_ips |= 32; // t0sz
+
+	asm volatile("mrs x0, TCR_EL1\n"
+		     "orr x0, x0, %0\n"
+		     "msr TCR_EL1, x0" ::"r"(tcr_ips)
+		     : "x0");
+
+	volatile uint64_t* l1 = (uint64_t*)0x42000000;
+	for (int i = 0; i < 512; i++) {
+		l1[i] = 0;
+	}
+	l1[0] = 0x00000001;
+	l1[0] |= (1 << 10);
+	l1[1] = 0x40000001;
+	l1[1] |= (1 << 10);
+	/* l1[2] = 0x40000001; */
+	/* l1[2] |= (1 << 10); */
+
+	asm volatile("msr TTBR0_EL1, %0" : "=r"(l1));
+
+	asm volatile("TLBI VMALLE1"); // invalidate tlb
+
+	asm volatile("mrs x0, SCTLR_EL1\n"
+		     "orr x0, x0, #1\n"
+		     "msr SCTLR_EL1, x0"); // everything breaks!
+
+	klog("Paging enabled!");
+
+	char* a = (char*)0x80000000;
+	char* b = (char*)0x40000000;
+	*a = 'x';
+	put_char(*b);
 }
 
 void start()
@@ -90,6 +132,8 @@ void start()
 
 	timer_write_tval(timer_getfrequency());
 	timer_enable();
+
+	enable_paging_test();
 
 	klog("Kernel finished");
 	uint64_t cnt_end = timer_read_systemcounter();
