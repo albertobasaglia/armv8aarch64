@@ -75,44 +75,51 @@ void setup_heap()
 
 void enable_paging_test()
 {
-	// 0b010 40 bits, 1TB.
-	// 0b101 48 bits, 256TB
+	// Create the page tables
+	volatile uint64_t* l1 = (uint64_t*)0x42000000;
+	for (int i = 0; i < 512; i++) {
+		l1[i] = 0x40000000 * i | (1 << 10) | 1;
+	}
 
-	uint64_t tcr_ips = 0b10; // 1TB output address!
+	// Setup the registers
+	uint64_t tcr_ips = 0b10;
 	tcr_ips = tcr_ips << 32;
-
-	tcr_ips |= 32; // t0sz
-
+	tcr_ips |= 32;
 	asm volatile("mrs x0, TCR_EL1\n"
 		     "orr x0, x0, %0\n"
 		     "msr TCR_EL1, x0" ::"r"(tcr_ips)
 		     : "x0");
 
-	volatile uint64_t* l1 = (uint64_t*)0x42000000;
-	for (int i = 0; i < 512; i++) {
-		l1[i] = 0;
-	}
-	l1[0] = 0x00000001;
-	l1[0] |= (1 << 10);
-	l1[1] = 0x40000001;
-	l1[1] |= (1 << 10);
-	/* l1[2] = 0x40000001; */
-	/* l1[2] |= (1 << 10); */
-
-	asm volatile("msr TTBR0_EL1, %0" : "=r"(l1));
-
-	asm volatile("TLBI VMALLE1"); // invalidate tlb
-
-	asm volatile("mrs x0, SCTLR_EL1\n"
+	asm volatile("msr TTBR0_EL1, %0\n"
+		     "mrs x0, SCTLR_EL1\n"
 		     "orr x0, x0, #1\n"
-		     "msr SCTLR_EL1, x0"); // everything breaks!
+		     "msr SCTLR_EL1, x0" ::"r"(l1)
+		     : "x0");
 
-	klog("Paging enabled!");
+	// Try to break it
+
+	l1[2] = 0x40000001 | (1 << 10);
 
 	char* a = (char*)0x80000000;
 	char* b = (char*)0x40000000;
-	*a = 'x';
+	*a = '?';
 	put_char(*b);
+
+	// Adding a second layer paging
+
+	volatile uint64_t* l2 = (uint64_t*)0x42001000;
+	for (int i = 0; i < 512; i++) {
+		l2[i] = (0x40000001 + 0x200000 * i) | (1 << 10);
+	}
+
+	l1[3] = 0x42001003;
+
+	char* c = (char*)0xc0000000;
+	put_char(*c);
+
+	// It works!
+
+	klog("Paging enabled!");
 }
 
 void start()
