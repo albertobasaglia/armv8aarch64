@@ -14,7 +14,8 @@ BUILD_OBJS = timer/timer.o \
 	     alloc/slab.o \
 	     alloc/heap.o \
 	     string.o \
-	     log.o
+	     log.o \
+	     mm/paging.o
 
 all: kernel.elf
 

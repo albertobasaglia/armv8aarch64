@@ -1,3 +1,4 @@
+#include "paging.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -79,6 +80,7 @@ void enable_paging_test()
 	volatile uint64_t* l1 = (uint64_t*)0x42000000;
 	for (int i = 0; i < 512; i++) {
 		l1[i] = 0x40000000 * i | (1 << 10) | 1;
+		paging_l012_create_entry_block(0x40000000 * i, 1);
 	}
 
 	// Setup the registers
@@ -98,7 +100,7 @@ void enable_paging_test()
 
 	// Try to break it
 
-	l1[2] = 0x40000001 | (1 << 10);
+	l1[2] = paging_l012_create_entry_block(0x40000000, 1);
 
 	char* a = (char*)0x80000000;
 	char* b = (char*)0x40000000;
@@ -109,10 +111,11 @@ void enable_paging_test()
 
 	volatile uint64_t* l2 = (uint64_t*)0x42001000;
 	for (int i = 0; i < 512; i++) {
-		l2[i] = (0x40000001 + 0x200000 * i) | (1 << 10);
+		l2[i] = paging_l012_create_entry_block(
+		    0x40000000 + 0x200000 * i, 2);
 	}
 
-	l1[3] = 0x42001003;
+	l1[3] = paging_l012_create_entry_table((uint64_t)l2);
 
 	char* c = (char*)0xc0000000;
 	put_char(*c);
