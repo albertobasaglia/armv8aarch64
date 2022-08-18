@@ -38,11 +38,11 @@ inline char slab_header_reset_value()
 	return 0;
 }
 
-Slab slab_create(size_t object_size, size_t max_store, void* starting_address)
+struct slab slab_create(size_t object_size, size_t max_store, void* starting_address)
 {
 	size_t total_size = slab_get_needed_size(object_size, max_store);
 	size_t header_size = slab_get_header_size(object_size, max_store);
-	Slab slab = {
+	struct slab slab = {
 	    .starting_address = starting_address,
 	    .max_store = max_store,
 	    .header_size = header_size,
@@ -59,7 +59,7 @@ Slab slab_create(size_t object_size, size_t max_store, void* starting_address)
 	return slab;
 }
 
-int slab_get_header_bit(Slab* slab, int n)
+int slab_get_header_bit(struct slab* slab, int n)
 {
 	uint8_t* header_byte = (uint8_t*)slab->starting_address;
 	int offset = n % 8;
@@ -68,7 +68,7 @@ int slab_get_header_bit(Slab* slab, int n)
 	return (header_byte[quot] & (1 << offset)) != 0 ? 1 : 0;
 }
 
-void slab_set_header_bit(Slab* slab, int n, int v)
+void slab_set_header_bit(struct slab* slab, int n, int v)
 {
 	uint8_t* header_byte = (uint8_t*)slab->starting_address;
 	int offset = n % 8;
@@ -78,7 +78,7 @@ void slab_set_header_bit(Slab* slab, int n, int v)
 	header_byte[quot] |= (v << offset);
 }
 
-size_t slab_get_next_slot(Slab* slab)
+size_t slab_get_next_slot(struct slab* slab)
 {
 	size_t count = slab->max_store - 1;
 	while (count >= 0) {
@@ -91,7 +91,7 @@ size_t slab_get_next_slot(Slab* slab)
 	return -1;
 }
 
-void* slab_allocate(Slab* slab)
+void* slab_allocate(struct slab* slab)
 {
 	int slot = slab_get_next_slot(slab);
 	if (slot == -1) {
@@ -106,7 +106,7 @@ void* slab_allocate(Slab* slab)
 	return slab->starting_address + slot_position;
 }
 
-int slab_free(Slab* slab, void* ptr)
+int slab_free(struct slab* slab, void* ptr)
 {
 	size_t offset = (size_t)ptr;
 	offset -= (size_t)slab->starting_address;
@@ -131,7 +131,7 @@ int slab_free(Slab* slab, void* ptr)
 	return 0;
 }
 
-size_t slab_get_size(Slab* slab)
+size_t slab_get_size(struct slab* slab)
 {
 	return slab_get_needed_size(slab->object_size, slab->max_store);
 }
