@@ -1,0 +1,6 @@
+Memory layout:
+
+0x0        - 0x40000000 : Flash
+0x40000000 - 0x50000000 : Kernel data structures
+0x50000000 - 0x80000000 : Kernel code
+0x80000000 -      ?     : User space
