@@ -1,4 +1,5 @@
 #include "paging.h"
+#include "sysutils.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -20,11 +21,6 @@ void handle_timer_int(int id)
 {
 	klog("Ack TIMER");
 	timer_write_tval(timer_getfrequency());
-}
-
-void set_vbar_el1()
-{
-	asm volatile("msr VBAR_EL1, %0" ::"r"(&EXCEPTION_TABLE));
 }
 
 void enable_gic()
@@ -60,7 +56,7 @@ void enable_paging_test()
 
 void start()
 {
-	set_vbar_el1();
+	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
 	setup_heap();
 
 	void* slab_memory = heap_alloc(
@@ -72,13 +68,8 @@ void start()
 	paging_slab = slab_create(sizeof(struct page_table_store), 128,
 				  slab_memory);
 
-	// disable FIQ masking
-	uint64_t flags = (1 << 6) | (1 << 7);
-	flags = ~flags;
-	asm volatile("mrs x0, DAIF\n"
-		     "and x0, x0, %0\n"
-		     "msr DAIF, x0" ::"r"(flags)
-		     : "x0");
+	sysutils_mask_fiq(false);
+
 	klog("Kernel started");
 	enable_gic();
 	klog("GIC enabled");
