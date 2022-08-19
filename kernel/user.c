@@ -1,3 +1,4 @@
+#include "log.h"
 #include <user.h>
 void init()
 {

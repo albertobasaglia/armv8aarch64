@@ -2,6 +2,7 @@
 #define EXCEPTIONS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define ESR_EC_OFFSET       26
 #define ESR_EC_MASK         0x3f
@@ -32,5 +33,7 @@ uint64_t exceptions_getesr();
  *                     to switch
  * */
 void exceptions_handle_fiq();
+
+bool exceptions_handle_syscall(uint16_t imm);
 
 #endif
