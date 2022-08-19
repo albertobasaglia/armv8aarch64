@@ -51,7 +51,7 @@ struct slab slab_create(size_t object_size, size_t max_store, void* starting_add
 char slab_header_reset_value();
 
 /*
- * Internal Arithmetics for aligning memory
+ * Returns how many object_size objects are needed to store "size"
  * */
 int slab_align_to_object(size_t object_size, size_t size);
 

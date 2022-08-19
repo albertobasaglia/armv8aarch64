@@ -1,4 +1,6 @@
+#include <log.h>
 #include <slab.h>
+#include <string.h>
 
 #include <stddef.h>
 #include <stdint.h>
@@ -13,23 +15,16 @@ size_t slab_get_needed_size(size_t object_size, size_t max_store)
 
 int slab_align_to_object(size_t object_size, size_t size)
 {
-	int count = 0;
-	while (size > 0) {
-		size -= object_size;
-		count++;
-	}
+	int count = (size / object_size) + (size % object_size == 0 ? 0 : 1);
 	return object_size * count;
 }
 
 size_t slab_get_header_size(size_t object_size, size_t max_store)
 {
-	int offset = max_store;
-	int quot = 0;
-	while (offset >= 8) {
-		quot++;
-		offset -= 8;
-	}
+	int offset = max_store % 8;
+	int quot = max_store / 8;
 	int header_bytes = offset == 0 ? quot : quot + 1;
+
 	return slab_align_to_object(object_size, header_bytes);
 }
 
@@ -38,7 +33,9 @@ inline char slab_header_reset_value()
 	return 0;
 }
 
-struct slab slab_create(size_t object_size, size_t max_store, void* starting_address)
+struct slab slab_create(size_t object_size,
+			size_t max_store,
+			void* starting_address)
 {
 	size_t total_size = slab_get_needed_size(object_size, max_store);
 	size_t header_size = slab_get_header_size(object_size, max_store);
@@ -48,14 +45,11 @@ struct slab slab_create(size_t object_size, size_t max_store, void* starting_add
 	    .header_size = header_size,
 	    .object_size = object_size,
 	};
+
 	// set all header bytes to the default value
 	char default_val = slab_header_reset_value();
-	char* ptr = (char*)starting_address;
-	char* last = ptr + header_size;
-	while (ptr < last) {
-		*ptr = default_val;
-		ptr++;
-	}
+	memset(starting_address, default_val, header_size);
+
 	return slab;
 }
 
