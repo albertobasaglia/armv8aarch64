@@ -43,7 +43,8 @@ void exceptions_handle_fiq()
 	int intid = gic_interface_read_and_ack_group0();
 	Handler* handler = gic_redistributor_get_handler(intid);
 	if (handler != NULL) {
-		handler(intid);
+		void* param = gic_redistributor_get_handler_param(intid);
+		handler(intid, param);
 	} else {
 		put_string("Unhandled interrupt\n");
 	}

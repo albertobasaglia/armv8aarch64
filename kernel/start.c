@@ -2,6 +2,7 @@
 #include "paging.h"
 #include "sysutils.h"
 #include "user.h"
+#include "virtioblk.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -9,6 +10,7 @@
 #include <heap.h>
 #include <log.h>
 #include <slab.h>
+#include <string.h>
 #include <timer.h>
 #include <uart.h>
 
@@ -19,7 +21,7 @@ extern char HEAP_START;
 struct heap main_heap;
 struct slab paging_slab;
 
-void handle_timer_int(int id)
+void handle_timer_int(int id, void* arg)
 {
 	klog("Ack TIMER");
 	timer_write_tval(timer_getfrequency());
@@ -33,7 +35,11 @@ void enable_gic()
 	gic_interface_enablegroups();
 	gic_interface_setprioritymask(0xff);
 	gic_redistributor_enable_id(30);
-	gic_redistributor_set_handler(30, handle_timer_int);
+	gic_distributor_set_priority(79, 0);
+	gic_distributor_set_target(79, 1);
+	gic_distributor_enable_id(79);
+	gic_distributor_set_group(79, 0);
+	gic_redistributor_set_handler(30, handle_timer_int, NULL);
 }
 
 void setup_heap()
@@ -67,6 +73,20 @@ void jump_usermode()
 	sysutils_jump_eret_usermode(&user_job);
 }
 
+void try_disk()
+{
+	struct virtioblk disk;
+	if (disk_init(&disk, 31) == 0) {
+		klog("Disk init is successful");
+	} else {
+		klog("Disk init error!");
+	}
+
+	char buffer[512];
+	disk_create_request_sync(&disk, 0, buffer, 0);
+	klog(buffer);
+}
+
 void start()
 {
 	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
@@ -82,6 +102,7 @@ void start()
 				  slab_memory);
 
 	sysutils_mask_fiq(false);
+	sysutils_mask_irq(false);
 
 	klog("Kernel started");
 	enable_gic();
@@ -93,6 +114,10 @@ void start()
 	enable_paging_test();
 
 	klog("Kernel finished");
+
+	try_disk();
+	while (1)
+		;
 
 	jump_usermode();
 }

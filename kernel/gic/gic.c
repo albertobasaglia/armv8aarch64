@@ -1,3 +1,4 @@
+#include "log.h"
 #include "slab.h"
 #include <gic.h>
 
@@ -6,11 +7,12 @@
 #define MAX_INTS 1024
 
 static Handler* handlers[MAX_INTS];
+static void* handler_params[MAX_INTS];
 
 void gic_distributor_enable()
 {
 	uint32_t ctrl = 0;
-	volatile uint32_t* GICD_CTRL = (uint32_t*)GIC_DIST + 0x0;
+	volatile uint32_t* GICD_CTRL = (uint32_t*)(GIC_DIST + 0x0);
 	ctrl |= (1 << 4); // ARE (Affinity Register Enable)
 	*GICD_CTRL = ctrl;
 
@@ -19,6 +21,67 @@ void gic_distributor_enable()
 	ctrl |= (1 << 1);
 	ctrl |= (1 << 0);
 	*GICD_CTRL = ctrl;
+}
+
+void gic_distributor_enable_id(int intid)
+{
+	int offset = intid % 32;
+	int reg = intid / 32;
+
+	volatile uint32_t* GICD_ISENABLER = (uint32_t*)(GIC_DIST + 0x100);
+	GICD_ISENABLER += reg;
+
+	*GICD_ISENABLER |= (1 << offset);
+}
+
+void gic_distributor_set_group(int id, int group)
+{
+	int offset = id % 32;
+	int reg = id / 32;
+
+	volatile uint32_t* GICD_ISENABLER = (uint32_t*)(GIC_DIST + 0x80);
+	GICD_ISENABLER += reg;
+
+	if (group) {
+		*GICD_ISENABLER |= (1 << offset);
+	} else {
+		*GICD_ISENABLER &= ~(1 << offset);
+	}
+}
+
+void gic_distributor_set_priority(int id, uint8_t priority)
+{
+	int offset = id % 4;
+	int reg = id / 4;
+
+	uint32_t shifted = priority << (8 * offset);
+	uint32_t mask = 0xff << (8 * offset);
+	mask = ~mask;
+
+	volatile uint32_t* GICD_ISENABLER = (uint32_t*)(GIC_DIST + 0x400);
+	GICD_ISENABLER += reg;
+
+	klogf("Mask: %x", mask);
+	klogf("Shifted: %x", shifted);
+
+	*GICD_ISENABLER &= mask;
+	*GICD_ISENABLER |= shifted;
+}
+
+void gic_distributor_set_target(int id, uint8_t value)
+{
+	int offset = id % 4;
+	int reg = id / 4;
+
+	uint32_t shifted = value << (8 * offset);
+	uint32_t mask = 0xff << (8 * offset);
+	mask = ~mask;
+
+	volatile uint32_t* GICD_ISENABLER = (uint32_t*)(GIC_DIST + 0x800);
+	GICD_ISENABLER += reg;
+
+	*GICD_ISENABLER &= mask;
+	*GICD_ISENABLER |= shifted;
 }
 
 void gic_redistributor_wake()
@@ -33,11 +96,14 @@ void gic_redistributor_wake()
 
 void gic_redistributor_enable_id(int id)
 {
-	// TODO this works for 0-31 only atm
+	int offset = id % 32;
+	int reg = id / 32;
+
 	volatile uint32_t* GICR_ISENABLER0 = (uint32_t*)(GIC_REDIST_SGI +
 							 0x100);
+	GICR_ISENABLER0 += reg;
 
-	*GICR_ISENABLER0 |= (1 << id);
+	*GICR_ISENABLER0 |= (1 << offset);
 }
 
 void gic_interface_setbinarypoint0(uint8_t bp)
@@ -103,12 +169,13 @@ void gic_interface_end_of_interrupt_group1(uint32_t intid)
 	asm volatile("msr ICC_EOIR1_EL1, %0" ::"r"(reg));
 }
 
-void gic_redistributor_set_handler(int intid, Handler* handler)
+void gic_redistributor_set_handler(int intid, Handler* handler, void* arg)
 {
 	if (intid < 0 || intid > MAX_INTS)
 		return;
 
 	handlers[intid] = handler;
+	handler_params[intid] = arg;
 }
 
 Handler* gic_redistributor_get_handler(int intid)
@@ -117,6 +184,14 @@ Handler* gic_redistributor_get_handler(int intid)
 		return NULL;
 
 	return handlers[intid];
+}
+
+void* gic_redistributor_get_handler_param(int intid)
+{
+	if (intid < 0 || intid > MAX_INTS)
+		return NULL;
+
+	return handler_params[intid];
 }
 
 void gic_redistributor_erase_handlers()

@@ -9,13 +9,24 @@
 #define GIC_REDIST_SGI 0x080b0000
 
 // Interrupt handler
-typedef void(Handler)(int);
+typedef void(Handler)(int, void*);
 
 /*
  * Enables the distributor interface GICD
  * Enables groups 0 and 1
  * */
 void gic_distributor_enable();
+
+/*
+ * Enables an interrupt on the distributor
+ * */
+void gic_distributor_enable_id(int id);
+
+void gic_distributor_set_priority(int id, uint8_t priority);
+
+void gic_distributor_set_target(int id, uint8_t value);
+
+void gic_distributor_set_group(int id, int group);
 
 /*
  * Enables and wakes the redistributor interface GICR
@@ -68,7 +79,7 @@ void gic_interface_end_of_interrupt_group1(uint32_t intid);
  *
  * NULL value is used to indicate unassigned handler
  * */
-void gic_redistributor_set_handler(int intid, Handler* handler);
+void gic_redistributor_set_handler(int intid, Handler* handler, void* arg);
 
 /*
  * Gets handler for interrupt id
@@ -76,6 +87,7 @@ void gic_redistributor_set_handler(int intid, Handler* handler);
  * NULL value is used to indicate unassigned handler
  * */
 Handler* gic_redistributor_get_handler(int intid);
+void* gic_redistributor_get_handler_param(int intid);
 
 void gic_redistributor_erase_handlers();
 
