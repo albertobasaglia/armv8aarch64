@@ -1,6 +1,7 @@
 #ifndef PAGING_H
 #define PAGING_H
 
+#include "slab.h"
 #include <stdint.h>
 
 #define PAGING_L012_VALID              (1 << 0)
@@ -29,6 +30,11 @@ uint64_t paging_l012_create_entry_block(uint64_t block_address, int level);
 uint64_t paging_l012_create_entry_table(uint64_t table_address);
 
 /*
+ * Creates an invalid entry
+ * */
+uint64_t paging_create_entry_invalid();
+
+/*
  * Sets the TTBR0 register
  * */
 void paging_set_ttbr0(uint64_t table_address);
@@ -44,5 +50,32 @@ void paging_set_tcr();
  * Enables paging
  * */
 void paging_enable();
+
+#define PAGING_ENTRIES_PER_TABLE 512
+struct page_table_store {
+	uint64_t entries[PAGING_ENTRIES_PER_TABLE];
+};
+
+struct paging_manager {
+	struct page_table_store* l1;
+	struct slab* pages_allocator;
+};
+
+/*
+ * Configures registers to use this paging scheme.
+ * */
+void paging_manager_apply(struct paging_manager* paging_manager);
+
+/*
+ * Inits the struct and configures the first level page.
+ * By default all entries are invalid.
+ * */
+void paging_manager_init(struct paging_manager* paging_manager,
+			 struct slab* pages_allocator);
+
+/*
+ * Maps the kernel in the page table
+ * */
+void paging_manager_map_kernel(struct paging_manager* paging_manager);
 
 #endif

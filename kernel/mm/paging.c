@@ -1,3 +1,4 @@
+#include "slab.h"
 #include <paging.h>
 #include <stdint.h>
 
@@ -25,6 +26,11 @@ uint64_t paging_l012_create_entry_table(uint64_t table_address)
 	return entry;
 }
 
+uint64_t paging_create_entry_invalid()
+{
+	return 0;
+}
+
 void paging_set_ttbr0(uint64_t table_address)
 {
 	asm volatile("msr TTBR0_EL1, %0" ::"r"(table_address));
@@ -46,4 +52,33 @@ void paging_enable()
 	asm volatile("mrs x0, SCTLR_EL1\n"
 		     "orr x0, x0, #1\n"
 		     "msr SCTLR_EL1, x0");
+}
+
+void paging_manager_apply(struct paging_manager* paging_manager)
+{
+	paging_set_ttbr0((uint64_t)paging_manager->l1);
+	paging_set_tcr();
+	paging_enable();
+}
+
+void paging_manager_init(struct paging_manager* paging_manager,
+			 struct slab* pages_allocator)
+{
+	paging_manager->pages_allocator = pages_allocator;
+
+	struct page_table_store* l1 = slab_allocate(
+	    paging_manager->pages_allocator);
+
+	for (int i = 0; i < PAGING_ENTRIES_PER_TABLE; i++) {
+		l1->entries[i] = paging_create_entry_invalid();
+	}
+
+	paging_manager->l1 = l1;
+}
+
+void paging_manager_map_kernel(struct paging_manager* paging_manager)
+{
+	paging_manager->l1->entries[0] = paging_l012_create_entry_block(0x0, 1);
+	paging_manager->l1->entries[1] = paging_l012_create_entry_block(
+	    0x40000000, 1);
 }

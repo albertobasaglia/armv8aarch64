@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <string.h>
 
 char* strcpy(char* dest, const char* src)
@@ -80,13 +81,37 @@ int strlen(const char* str)
 	return len;
 }
 
+/* void* memset(void* str, int c, size_t n) */
+/* { */
+/* 	char fill_value = c; */
+/* 	char* str_char = (char*)str; */
+/* 	for (size_t i = 0; i < n; i++) { */
+/* 		str_char[i] = fill_value; */
+/* 	} */
+/* 	return str; */
+/* } */
+
 void* memset(void* str, int c, size_t n)
 {
-	char fill_value = c;
-	char* str_char = (char*)str;
-	for (size_t i = 0; i < n; i++) {
-		str_char[i] = fill_value;
+	uint64_t big_c = 0;
+	for (int i = 0; i < 8; i++) { // 8 bytes in a uint64_t
+		big_c <<= 8;
+		big_c |= c;
 	}
+	int big_writes = n / 8;
+	int small_writes = n - big_writes * 8;
+
+	uint64_t* big_pointer = (uint64_t*)str;
+	for (int i = 0; i < big_writes; i++) {
+		big_pointer[i] = big_c;
+	}
+
+	char* small_pointer = (char*)str;
+	small_pointer += big_writes * 8;
+	for (int i = 0; i < small_writes; i++) {
+		small_pointer[i] = c;
+	}
+
 	return str;
 }
 
