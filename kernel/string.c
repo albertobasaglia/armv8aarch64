@@ -128,3 +128,14 @@ void strrev(char* str)
 		right--;
 	}
 }
+
+void* memcpy(void* restrict dest, const void* restrict src, size_t n)
+{
+	char* dest_char = (char*)dest;
+	char* src_char = (char*)src;
+	// TODO optimize (same strategy as memset)
+	for (int i = 0; i < n; i++) {
+		dest_char[i] = src_char[i];
+	}
+	return dest;
+}

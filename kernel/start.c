@@ -1,5 +1,7 @@
+#include "job.h"
 #include "paging.h"
 #include "sysutils.h"
+#include "user.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -54,6 +56,17 @@ void enable_paging_test()
 	klog("Paging enabled");
 }
 
+void jump_usermode()
+{
+	struct paging_manager pm;
+	paging_manager_init(&pm, &paging_slab);
+	paging_manager_map_kernel(
+	    &pm); // every userprocess has the kernel mapped in!
+	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
+	struct job user_job = job_create((uint64_t)init, 0, "init", &pm);
+	sysutils_jump_eret_usermode(&user_job);
+}
+
 void start()
 {
 	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
@@ -80,5 +93,6 @@ void start()
 	enable_paging_test();
 
 	klog("Kernel finished");
-	uint64_t cnt_end = timer_read_systemcounter();
+
+	jump_usermode();
 }

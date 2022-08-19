@@ -1,8 +1,10 @@
 #ifndef PAGING_H
 #define PAGING_H
 
-#include "slab.h"
+#include <stdbool.h>
 #include <stdint.h>
+
+#include <slab.h>
 
 #define PAGING_L012_VALID              (1 << 0)
 #define PAGING_L012_TABLE              (1 << 1)
@@ -22,7 +24,10 @@
 /*
  * Returns an entry pointing to a block for a level 0, 1 or 2.
  * */
-uint64_t paging_l012_create_entry_block(uint64_t block_address, int level);
+uint64_t paging_l012_create_entry_block(uint64_t block_address,
+					int level,
+					bool unprivileged_access,
+					bool read_only);
 
 /*
  * Returns an entry pointing to a table for a level 0, 1 or 2.
@@ -77,5 +82,11 @@ void paging_manager_init(struct paging_manager* paging_manager,
  * Maps the kernel in the page table
  * */
 void paging_manager_map_kernel(struct paging_manager* paging_manager);
+
+void paging_manager_map_1gb(struct paging_manager* paging_manager,
+			    uint64_t va,
+			    uint64_t pa,
+			    bool unprivileged_access,
+			    bool read_only);
 
 #endif

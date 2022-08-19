@@ -1,14 +1,25 @@
-#include "slab.h"
 #include <paging.h>
+#include <slab.h>
+#include <stdbool.h>
 #include <stdint.h>
 
-uint64_t paging_l012_create_entry_block(uint64_t block_address, int level)
+uint64_t paging_l012_create_entry_block(uint64_t block_address,
+					int level,
+					bool unprivileged_access,
+					bool read_only)
 {
 	if (level <= 0 || level > 2)
 		return 0;
 
 	uint64_t entry = PAGING_L012_VALID;
 	entry |= block_address;
+
+	if (unprivileged_access)
+		entry |= PAGING_AP1;
+
+	if (read_only)
+		entry |= PAGING_AP2;
+
 	if (level == 1)
 		entry |= block_address & PAGING_L1_BLOCK_ADDRESS_MASK;
 	else if (level == 2)
@@ -78,7 +89,17 @@ void paging_manager_init(struct paging_manager* paging_manager,
 
 void paging_manager_map_kernel(struct paging_manager* paging_manager)
 {
-	paging_manager->l1->entries[0] = paging_l012_create_entry_block(0x0, 1);
-	paging_manager->l1->entries[1] = paging_l012_create_entry_block(
-	    0x40000000, 1);
+	paging_manager_map_1gb(paging_manager, 0x0, 0x0, 0, 0);
+	paging_manager_map_1gb(paging_manager, 0x40000000, 0x40000000, 0, 0);
+}
+
+void paging_manager_map_1gb(struct paging_manager* paging_manager,
+			    uint64_t va,
+			    uint64_t pa,
+			    bool unprivileged_access,
+			    bool read_only)
+{
+	int gb_offset = va / 0x40000000;
+	paging_manager->l1->entries[gb_offset] = paging_l012_create_entry_block(
+	    pa, 1, unprivileged_access, read_only);
 }

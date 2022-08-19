@@ -19,4 +19,16 @@ void exceptions_distributor();
 
 uint64_t exceptions_getesr();
 
+/*
+ * At the current state this handles both the exceptions coming from the current
+ * level and the ones coming from the lower (EL0) level.
+ *
+ * There are cases where the two should have different behaviors.
+ * E.g: FIQ is generated from the generic timer:
+ *  - Coming from EL0: trigger the context switch mechanism
+ *  - Coming from EL1: just reload the timer since there is no usermode process
+ *                     to switch
+ * */
+void exceptions_handle_fiq();
+
 #endif

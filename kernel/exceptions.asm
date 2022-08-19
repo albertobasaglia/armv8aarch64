@@ -43,7 +43,8 @@ excbreak:
         b .
 // FIQ
 .balign 0x80
-        b .
+        bl exceptions_handle_fiq
+        eret
 // SERROR
 .balign 0x80
         b .

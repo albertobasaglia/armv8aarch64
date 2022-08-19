@@ -32,6 +32,7 @@ void exceptions_handle_fiq()
 	gic_interface_end_of_interrupt_group0(intid);
 }
 
+
 uint64_t exceptions_getesr()
 {
 	uint64_t esr;

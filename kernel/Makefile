@@ -17,7 +17,8 @@ BUILD_OBJS = timer/timer.o \
 	     log.o \
 	     mm/paging.o \
 	     sysutils.o \
-	     job.o
+	     job.o \
+	     user.o
 
 all: kernel.elf
 

@@ -2,6 +2,12 @@ ENTRY(_start)
 
 SECTIONS
 {
+        . = 0x80000000;
+
+        .usertext : {user.o(.text)}
+        .userdata : {user.o(.data)}
+        .userbss : {user.o(.bss)}
+
         . = 0x40000000;
         EXCEPTION_TABLE = .;
         .exceptions_table : {_exceptions.o(.text)}
@@ -21,8 +27,4 @@ SECTIONS
         . += 0x10000;
         STACK_END = .;
 
-        . = ALIGN(16);
-        USERSTACK_START = .;
-        . += 0x10000;
-        USERSTACK_END = .;
 }

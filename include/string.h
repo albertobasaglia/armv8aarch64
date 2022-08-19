@@ -19,6 +19,11 @@ int strlen(const char* str);
 
 void *memset(void *str, int c, size_t n);
 
+void *memcpy(void *restrict dest, const void *restrict src, size_t n);
+
+/*
+ * Reverse a NULL-terminated string
+ * */
 void strrev(char* str);
 
 #endif
