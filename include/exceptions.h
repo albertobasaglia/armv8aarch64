@@ -15,6 +15,8 @@
 #define ESR_ISS_OFFSET      0
 #define ESR_ISS_MASK        0x1ffffff
 
+#define ESR_ISS_SVC_IMM16   0xffff
+
 void exceptions_distributor();
 
 uint64_t exceptions_getesr();

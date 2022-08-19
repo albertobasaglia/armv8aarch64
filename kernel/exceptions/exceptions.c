@@ -15,8 +15,13 @@ void exceptions_distributor()
 		klog("Data abort from same EL");
 	} else if (ec == ESR_EC_DATABT_LOWER) {
 		klog("Data abort from lower EL");
+	} else if (ec == ESR_EC_SVC64) {
+		uint64_t imm16 = esr & ESR_ISS_SVC_IMM16;
+		klogf("Requested system call imm16: %q", imm16);
 	} else {
 		klog("Unhandled abort!");
+		while (1)
+			;
 	}
 }
 
@@ -31,7 +36,6 @@ void exceptions_handle_fiq()
 	}
 	gic_interface_end_of_interrupt_group0(intid);
 }
-
 
 uint64_t exceptions_getesr()
 {

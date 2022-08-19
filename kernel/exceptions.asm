@@ -37,7 +37,8 @@ excbreak:
 //lower_aarch64
 // SYNC
 .balign 0x80
-        b .
+        bl exceptions_distributor
+        eret
 // IRQ
 .balign 0x80
         b .

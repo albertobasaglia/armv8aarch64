@@ -85,6 +85,11 @@ void uint64_to_string(char* str, uint64_t num, int base)
 {
 	char buffer[50];
 	int i = 0;
+
+	if (num == 0) {
+		buffer[i++] = '0';
+	}
+
 	while (num > 0) {
 		int mod = num % base;
 		buffer[i++] = mod < 10 ? mod + '0' : mod - 10 + 'a';
