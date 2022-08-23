@@ -1,7 +1,7 @@
-void _start()
+int main()
 {
 	int a = 5;
 	int b = -5;
 	int c = a + b;
-	asm volatile("svc 0");
+	return 0;
 }
