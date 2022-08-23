@@ -22,6 +22,7 @@ extern char EXCEPTION_TABLE;
 extern char HEAP_START;
 
 struct slab paging_slab;
+struct paging_manager paging_kernel;
 
 void handle_timer_int(int id, void* arg)
 {
@@ -55,10 +56,9 @@ void setup_heap()
 
 void enable_paging_test()
 {
-	struct paging_manager pm;
-	paging_manager_init(&pm, &paging_slab);
-	paging_manager_map_kernel(&pm);
-	paging_manager_apply(&pm);
+	paging_manager_init(&paging_kernel, &paging_slab);
+	paging_manager_map_kernel(&paging_kernel);
+	paging_manager_apply(&paging_kernel);
 	klog("Paging enabled");
 }
 
@@ -112,10 +112,21 @@ void try_disk()
 	ElfN_Phdr* program_header = elf_get_programheader_byid(&elf, 0);
 	klogf("Program header 0 size is %q", program_header->p_filesz);
 
-	/* char buffer[512]; */
+	struct paging_manager pm;
+	paging_manager_init(&pm, &paging_slab);
+	paging_manager_map_kernel(
+	    &pm); // every userprocess has the kernel mapped in!
+	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
 
-	/* block_read(&disk_block, buffer, 0); */
-	/* klog(buffer); */
+	paging_manager_map_1gb(&paging_kernel, 0x80000000, 0x80000000, 0, 0);
+
+	elf_dump_program_content(&elf, program_header, (void*)0x80000000);
+	klog("Loaded program");
+
+	klogf("Jumping to 0x%x (entry point)", elf.header.e_entry);
+	struct job init_job = job_create(elf.header.e_entry, 0x80001000, "init",
+					 &pm);
+	sysutils_jump_eret_usermode(&init_job);
 }
 
 void start()

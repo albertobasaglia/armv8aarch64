@@ -47,6 +47,16 @@ void sysutils_set_vbar(uint64_t base_address)
 
 void sysutils_jump_eret_usermode(struct job* job)
 {
+	uint64_t target_el_mask = 0xf;
+	target_el_mask = ~target_el_mask;
+	uint64_t target_el = 0; // EL0
+				// set the return level (and stack pointer)
+	asm volatile("mrs x0, SPSR_EL1\n"
+		     "and x0, x0, %0\n"
+		     "orr x0, x0, %1\n"
+		     "msr SPSR_EL1, x0" ::"r"(target_el_mask),
+		     "r"(target_el)
+		     : "x0");
 	paging_manager_apply(job->paging);
 	asm volatile("msr ELR_EL1, %0\n"
 		     "msr SP_EL0, %1\n"

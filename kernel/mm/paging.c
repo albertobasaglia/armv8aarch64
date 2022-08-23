@@ -70,6 +70,7 @@ void paging_manager_apply(struct paging_manager* paging_manager)
 	paging_set_ttbr0((uint64_t)paging_manager->l1);
 	paging_set_tcr();
 	paging_enable();
+	asm volatile("tlbi vmalle1");
 }
 
 void paging_manager_init(struct paging_manager* paging_manager,

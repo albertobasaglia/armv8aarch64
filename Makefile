@@ -6,6 +6,7 @@ kernel/kernel.elf: FORCE
 hdd: userspace/init.elf
 	qemu-img create hdd 32M
 	mkfs.fat -F16 hdd
+	rm -rf mount
 	mkdir mount
 	sudo mount -o loop hdd mount/
 	sudo cp userspace/init.elf mount/INIT.ELF
