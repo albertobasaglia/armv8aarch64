@@ -1,4 +1,5 @@
 #include "block.h"
+#include "fs/fat.h"
 #include "job.h"
 #include "paging.h"
 #include "sysutils.h"
@@ -82,10 +83,13 @@ void try_disk()
 
 	struct block disk_block = disk_register_block_device(&disk);
 
-	char buffer[512];
+	struct fat_handle fat = fat_load(&disk_block);
+	fat_debug_info(&fat);
 
-	block_read(&disk_block, buffer, 0);
-	klog(buffer);
+	/* char buffer[512]; */
+
+	/* block_read(&disk_block, buffer, 0); */
+	/* klog(buffer); */
 }
 
 void start()
