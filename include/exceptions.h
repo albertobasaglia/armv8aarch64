@@ -1,8 +1,8 @@
 #ifndef EXCEPTIONS_H
 #define EXCEPTIONS_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #define ESR_EC_OFFSET       26
 #define ESR_EC_MASK         0x3f
@@ -18,7 +18,7 @@
 
 #define ESR_ISS_SVC_IMM16   0xffff
 
-void exceptions_distributor();
+void exceptions_distributor(uint64_t* x30);
 
 uint64_t exceptions_getesr();
 

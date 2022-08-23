@@ -53,8 +53,8 @@ void heap_free(struct heap* heap, void* ptr);
  *  Create the table
  * */
 struct heap heap_createtable(char* heap_start_address,
-			       char* table_address,
-			       size_t heap_blocks);
+			     char* table_address,
+			     size_t heap_blocks);
 
 /*
  *  Marks the argument passed region as taken.

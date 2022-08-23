@@ -190,8 +190,8 @@ void fat_read_entry(struct fat_handle* handle,
 }
 
 struct fat16_dir_entry* fat_get_entry_by_file(struct fat_handle* handle,
-					  const char* name,
-					  const char* ext)
+					      const char* name,
+					      const char* ext)
 {
 	char fat_name[8], fat_ext[3];
 	fat_get_fat_extension(fat_ext, ext);

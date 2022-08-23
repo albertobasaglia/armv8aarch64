@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 struct heap heap_createtable(char* heap_start_address,
-			       char* table_address,
-			       size_t heap_blocks)
+			     char* table_address,
+			     size_t heap_blocks)
 {
 	heap_table_t table = table_address;
 	for (int i = 0; i < heap_blocks; i++)

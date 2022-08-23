@@ -9,7 +9,7 @@
  * All blocks will be aligned to the block size meaning that the header
  * is going to occupy space divisible by the block size
  * */
-struct slab{
+struct slab {
 	void* starting_address;
 	size_t max_store;
 	size_t object_size; // total allocated zone size
@@ -43,7 +43,9 @@ size_t slab_get_header_size(size_t object_size, size_t max_store);
  * This doesn't allocate any memory.
  * It expects the caller to do that.
  * */
-struct slab slab_create(size_t object_size, size_t max_store, void* starting_address);
+struct slab slab_create(size_t object_size,
+			size_t max_store,
+			void* starting_address);
 
 /*
  * Get value used to indicate that a bit represents an empty slab

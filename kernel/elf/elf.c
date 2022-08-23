@@ -1,5 +1,5 @@
-#include <elf/filebuffer.h>
 #include <elf/elf.h>
+#include <elf/filebuffer.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -73,8 +73,8 @@ int elf_load_sectionheaders(ELF* elf)
 	}
 
 	filebuffer_read_at_position(elf->section_headers, elf->header.e_shoff,
-			 elf->header.e_shentsize, elf->header.e_shnum,
-			 elf->file);
+				    elf->header.e_shentsize,
+				    elf->header.e_shnum, elf->file);
 
 	elf->section_headers_loaded = 1;
 	return 1;
@@ -90,8 +90,8 @@ int elf_load_programheaders(ELF* elf)
 	}
 
 	filebuffer_read_at_position(elf->program_headers, elf->header.e_phoff,
-			 elf->header.e_phentsize, elf->header.e_phnum,
-			 elf->file);
+				    elf->header.e_phentsize,
+				    elf->header.e_phnum, elf->file);
 
 	elf->program_headers_loaded = 1;
 	return 1;
@@ -133,7 +133,8 @@ int elf_load_strings_section(ELF* elf)
 
 	elf->strings_section_loaded = 1;
 
-	filebuffer_read_at_position(elf->strings_section, offset, size, 1, elf->file);
+	filebuffer_read_at_position(elf->strings_section, offset, size, 1,
+				    elf->file);
 
 	return 1;
 }

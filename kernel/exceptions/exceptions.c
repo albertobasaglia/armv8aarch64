@@ -10,11 +10,22 @@
 
 bool exceptions_handle_syscall(uint16_t imm)
 {
+	if (imm == 10) {
+		// syscall exit: hang
+		while (1)
+			;
+	}
 	return 0;
 }
 
-void exceptions_distributor()
+void exceptions_distributor(uint64_t* x30)
 {
+	/* for (int i = 0; i < 31; i++) { */
+	/* 	klogf("x%q: %x", i, x30[30 - i]); */
+	/* } */
+	uint64_t pc;
+	asm volatile("mrs %0, ELR_EL1" : "=r"(pc));
+	klogf("Program counter: 0x%x", pc);
 	uint64_t esr = exceptions_getesr();
 	uint64_t ec = (esr >> ESR_EC_OFFSET) & ESR_EC_MASK;
 	if (ec == ESR_EC_DATABT_SAME) {
@@ -27,8 +38,6 @@ void exceptions_distributor()
 		bool res = exceptions_handle_syscall(imm16);
 		if (!res) {
 			klogf("Unhandled syscall!");
-			while (1)
-				;
 		}
 	} else {
 		klog("Unhandled exception!");

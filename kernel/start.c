@@ -77,7 +77,7 @@ void jump_usermode()
 	/* sysutils_jump_eret_usermode(&user_job); */
 }
 
-void try_disk()
+void usermode()
 {
 	struct virtioblk disk;
 	if (disk_init(&disk, 31) == 0) {
@@ -156,9 +156,5 @@ void start()
 
 	klog("Kernel finished");
 
-	try_disk();
-	while (1)
-		;
-
-	jump_usermode();
+	usermode();
 }
