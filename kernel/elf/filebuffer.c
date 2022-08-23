@@ -1,6 +1,6 @@
 #include <elf/filebuffer.h>
 
-struct filebuffer wrapper_buffer(char* buffer)
+struct filebuffer filebuffer_frombuffer(char* buffer)
 {
 	struct filebuffer fw = {
 	    .buffer = buffer,
@@ -8,11 +8,11 @@ struct filebuffer wrapper_buffer(char* buffer)
 	return fw;
 }
 
-void read_at_position(void* ptr,
-		      size_t offset_bytes,
-		      size_t size_bytes,
-		      int count,
-		      struct filebuffer filewrap)
+void filebuffer_read_at_position(void* ptr,
+				 size_t offset_bytes,
+				 size_t size_bytes,
+				 int count,
+				 struct filebuffer filewrap)
 {
 	char* src = filewrap.buffer;
 	char* char_ptr = (char*)ptr;

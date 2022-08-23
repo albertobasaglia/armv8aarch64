@@ -85,21 +85,6 @@ typedef struct {
 
 // Program header:
 
-#ifdef N32
-
-typedef struct {
-	uint32_t p_type;
-	Elf32_Off p_offset;
-	Elf32_Addr p_vaddr;
-	Elf32_Addr p_paddr;
-	uint32_t p_filesz;
-	uint32_t p_memsz;
-	uint32_t p_flags;
-	uint32_t p_align;
-} __attribute__((packed)) ElfN_Phdr;
-
-#else
-
 typedef struct {
 	uint32_t p_type;
 	uint32_t p_flags;
@@ -110,8 +95,6 @@ typedef struct {
 	uint64_t p_memsz;
 	uint64_t p_align;
 } __attribute__((packed)) ElfN_Phdr;
-
-#endif
 
 // Section header:
 

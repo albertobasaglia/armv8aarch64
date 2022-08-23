@@ -4,6 +4,8 @@
 #include "paging.h"
 #include "sysutils.h"
 #include "virtioblk.h"
+#include <elf/elf.h>
+#include <elf/filebuffer.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -68,7 +70,7 @@ void jump_usermode()
 	    &pm); // every userprocess has the kernel mapped in!
 	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
 	// TODO:
-	// - load executable section in memory
+	// - load executable section in memory (in user memory possibly!)
 	// - map it
 	// - execute it
 	/* struct job user_job = job_create((uint64_t)init, 0, "init", &pm); */
@@ -92,6 +94,23 @@ void try_disk()
 	struct fat16_dir_entry* entry = fat_get_entry_by_file(&fat, "init",
 							      "elf");
 	klogf("INIT.ELF filesize is %q", entry->filesize_bytes);
+
+	char* init_mem = kalloc(entry->filesize_bytes);
+	fat_read_entry(&fat, entry, init_mem);
+
+	struct filebuffer fb = filebuffer_frombuffer(init_mem);
+
+	ELF elf = elf_fromfilebuffer(fb);
+	elf_parseheader(&elf);
+	elf.section_headers = kalloc(elf_get_sectionheaders_bytes(&elf));
+	elf_load_sectionheaders(&elf);
+	elf.program_headers = kalloc(elf_get_programheaders_bytes(&elf));
+	elf_load_programheaders(&elf);
+
+	int ph_count = elf_get_programheader_count(&elf);
+	klogf("Program header count is %q", ph_count);
+	ElfN_Phdr* program_header = elf_get_programheader_byid(&elf, 0);
+	klogf("Program header 0 size is %q", program_header->p_filesz);
 
 	/* char buffer[512]; */
 

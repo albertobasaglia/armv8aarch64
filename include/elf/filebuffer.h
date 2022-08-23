@@ -8,7 +8,10 @@ struct filebuffer {
 	char* buffer;
 };
 
-void read_at_position(void* ptr,
+
+struct filebuffer filebuffer_frombuffer(char* buffer);
+
+void filebuffer_read_at_position(void* ptr,
 		      size_t offset_bytes,
 		      size_t size_bytes,
 		      int count,

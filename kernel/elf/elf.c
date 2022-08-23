@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <string.h>
 
-ELF elf_fromfilewrap(struct filebuffer file)
+ELF elf_fromfilebuffer(struct filebuffer file)
 {
 	ELF elf = {
 	    .file = file,
@@ -19,7 +19,7 @@ ELF elf_fromfilewrap(struct filebuffer file)
 int elf_parseheader(ELF* elf)
 {
 	size_t hdr_len = sizeof(ElfN_Ehdr);
-	read_at_position(&elf->header, 0, hdr_len, 1, elf->file);
+	filebuffer_read_at_position(&elf->header, 0, hdr_len, 1, elf->file);
 	if (elf->header.e_ident[0] != ELF_MAGIC_NUMBER) {
 		return 0;
 	}
@@ -72,7 +72,7 @@ int elf_load_sectionheaders(ELF* elf)
 		return 0;
 	}
 
-	read_at_position(elf->section_headers, elf->header.e_shoff,
+	filebuffer_read_at_position(elf->section_headers, elf->header.e_shoff,
 			 elf->header.e_shentsize, elf->header.e_shnum,
 			 elf->file);
 
@@ -89,7 +89,7 @@ int elf_load_programheaders(ELF* elf)
 		return 0;
 	}
 
-	read_at_position(elf->program_headers, elf->header.e_phoff,
+	filebuffer_read_at_position(elf->program_headers, elf->header.e_phoff,
 			 elf->header.e_phentsize, elf->header.e_phnum,
 			 elf->file);
 
@@ -133,7 +133,7 @@ int elf_load_strings_section(ELF* elf)
 
 	elf->strings_section_loaded = 1;
 
-	read_at_position(elf->strings_section, offset, size, 1, elf->file);
+	filebuffer_read_at_position(elf->strings_section, offset, size, 1, elf->file);
 
 	return 1;
 }
@@ -203,7 +203,7 @@ void elf_dump_section_content(ELF* elf, ElfN_Shdr* section, void* ptr)
 {
 	size_t size = section->sh_size;
 	size_t offset = section->sh_offset;
-	read_at_position(ptr, offset, size, 1, elf->file);
+	filebuffer_read_at_position(ptr, offset, size, 1, elf->file);
 }
 
 ElfN_Phdr* elf_get_programheader_byid(ELF* elf, int index)
@@ -224,7 +224,7 @@ void elf_dump_program_content(ELF* elf, ElfN_Phdr* program, void* ptr)
 {
 	size_t size = program->p_memsz;
 	size_t offset = program->p_offset;
-	read_at_position(ptr, offset, size, 1, elf->file);
+	filebuffer_read_at_position(ptr, offset, size, 1, elf->file);
 }
 
 ElfN_Addr elf_get_entrypoint(ELF* elf)
