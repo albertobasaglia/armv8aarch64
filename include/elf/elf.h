@@ -242,4 +242,14 @@ void elf_dump_program_content(ELF* elf, ElfN_Phdr* program, void* ptr);
  * */
 ElfN_Addr elf_get_entrypoint(ELF* elf);
 
+/*
+ * Allocates and parses all headers
+ * */
+void elf_alloc_and_parse(ELF* elf);
+
+/*
+ * Frees allocated memory
+ * */
+void elf_free(ELF* elf);
+
 #endif

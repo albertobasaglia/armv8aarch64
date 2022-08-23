@@ -18,9 +18,11 @@ struct job {
 	struct job* next;
 };
 
-struct job job_create(uint64_t entry,
-		      uint64_t sp,
-		      const char* name,
-		      struct paging_manager* paging);
+struct job* job_create(uint64_t entry,
+		       uint64_t sp,
+		       const char* name,
+		       struct paging_manager* paging);
+
+void job_init_slab(size_t max_jobs);
 
 #endif

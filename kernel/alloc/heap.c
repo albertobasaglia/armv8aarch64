@@ -16,6 +16,7 @@ struct heap heap_createtable(char* heap_start_address,
 	    .heap_start_address = heap_start_address,
 	    .heap = table_address,
 	    .blocks = heap_blocks,
+	    .free_blocks = heap_blocks,
 	};
 	return heap;
 }
@@ -55,6 +56,7 @@ void* heap_alloc(struct heap* heap, size_t size)
 		if (blocks_found == alloc_blocks) {
 			// Success, now we need to mark the blocks
 			mark_region_taken(start, block - 1);
+			heap->free_blocks -= alloc_blocks;
 			return ((void*)heap->heap_start_address +
 				(int)(start - heap->heap) *
 				    HEAP_BLOCK_SIZE_BYTES);
@@ -86,19 +88,27 @@ void heap_free(struct heap* heap, void* ptr)
 	// We need to be given a "first" block to free memory
 	if (!(*start & HEAP_BLOCK_FIRST))
 		return;
-	mark_region_free(start);
+	heap->free_blocks += mark_region_free(start);
 }
 
-void mark_region_free(heap_table_t from)
+size_t mark_region_free(heap_table_t from)
 {
+	size_t freed = 0;
 	while (!(*from & HEAP_BLOCK_LAST)) {
 		*from = 0;
 		from++;
+		freed++;
 	}
 	*from = 0;
+	return freed;
 }
 
 size_t heap_table_size(size_t blocks)
 {
 	return blocks * sizeof(heap_table_t);
+}
+
+size_t heap_get_free_blocks(struct heap* heap)
+{
+	return heap->free_blocks;
 }

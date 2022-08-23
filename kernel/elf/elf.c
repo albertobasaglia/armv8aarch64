@@ -1,3 +1,4 @@
+#include "sysutils.h"
 #include <elf/elf.h>
 #include <elf/filebuffer.h>
 #include <stddef.h>
@@ -231,4 +232,22 @@ void elf_dump_program_content(ELF* elf, ElfN_Phdr* program, void* ptr)
 ElfN_Addr elf_get_entrypoint(ELF* elf)
 {
 	return elf->header.e_entry;
+}
+
+void elf_alloc_and_parse(ELF* elf)
+{
+	elf_parseheader(elf);
+	elf->section_headers = kalloc(elf_get_sectionheaders_bytes(elf));
+	elf_load_sectionheaders(elf);
+	elf->program_headers = kalloc(elf_get_programheaders_bytes(elf));
+	elf_load_programheaders(elf);
+	elf->strings_section = kalloc(elf_get_stringsectionsize(elf));
+	elf_load_strings_section(elf);
+}
+
+void elf_free(ELF* elf)
+{
+	kfree(elf->section_headers);
+	kfree(elf->program_headers);
+	kfree(elf->strings_section);
 }

@@ -37,6 +37,7 @@ struct heap {
 	char* heap_start_address;
 	heap_table_t heap;
 	size_t blocks;
+	size_t free_blocks;
 };
 
 /*
@@ -64,8 +65,10 @@ void mark_region_taken(heap_table_t from, heap_table_t to);
 
 /*
  *  Frees a region of memory.
+ *
+ *  @return freed blocks
  * */
-void mark_region_free(heap_table_t from);
+size_t mark_region_free(heap_table_t from);
 
 /*
  *  Expected size for the table in bytes.
@@ -74,5 +77,10 @@ void mark_region_free(heap_table_t from);
  *  @return the size of the table in bytes
  * */
 size_t heap_table_size(size_t blocks);
+
+/*
+ * Returns the free blocks count
+ * */
+size_t heap_get_free_blocks(struct heap* heap);
 
 #endif

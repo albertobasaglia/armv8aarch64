@@ -47,7 +47,7 @@ void enable_gic()
 
 void setup_heap()
 {
-	int heap_size_blocks = 1024; // 4MB
+	int heap_size_blocks = 0x1000; // 16MB
 	size_t table_address = (size_t)&HEAP_START;
 	size_t heap_address = table_address + heap_table_size(heap_size_blocks);
 	sysutils_kernel_heap_create(table_address, heap_address,
@@ -62,23 +62,9 @@ void enable_paging_test()
 	klog("Paging enabled");
 }
 
-void jump_usermode()
-{
-	struct paging_manager pm;
-	paging_manager_init(&pm, &paging_slab);
-	paging_manager_map_kernel(
-	    &pm); // every userprocess has the kernel mapped in!
-	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
-	// TODO:
-	// - load executable section in memory (in user memory possibly!)
-	// - map it
-	// - execute it
-	/* struct job user_job = job_create((uint64_t)init, 0, "init", &pm); */
-	/* sysutils_jump_eret_usermode(&user_job); */
-}
-
 void usermode()
 {
+	// Read the elf file from the disk
 	struct virtioblk disk;
 	if (disk_init(&disk, 31) == 0) {
 		klog("Disk init is successful");
@@ -101,17 +87,14 @@ void usermode()
 	struct filebuffer fb = filebuffer_frombuffer(init_mem);
 
 	ELF elf = elf_fromfilebuffer(fb);
-	elf_parseheader(&elf);
-	elf.section_headers = kalloc(elf_get_sectionheaders_bytes(&elf));
-	elf_load_sectionheaders(&elf);
-	elf.program_headers = kalloc(elf_get_programheaders_bytes(&elf));
-	elf_load_programheaders(&elf);
+	elf_alloc_and_parse(&elf);
 
 	int ph_count = elf_get_programheader_count(&elf);
 	klogf("Program header count is %q", ph_count);
 	ElfN_Phdr* program_header = elf_get_programheader_byid(&elf, 0);
 	klogf("Program header 0 size is %q", program_header->p_filesz);
 
+	// Create the job
 	struct paging_manager pm;
 	paging_manager_init(&pm, &paging_slab);
 	paging_manager_map_kernel(
@@ -119,14 +102,16 @@ void usermode()
 	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
 
 	paging_manager_map_1gb(&paging_kernel, 0x80000000, 0x80000000, 0, 0);
-
 	elf_dump_program_content(&elf, program_header, (void*)0x80000000);
-	klog("Loaded program");
+	elf_free(&elf);
 
 	klogf("Jumping to 0x%x (entry point)", elf.header.e_entry);
-	struct job init_job = job_create(elf.header.e_entry, 0x80001000, "init",
-					 &pm);
-	sysutils_jump_eret_usermode(&init_job);
+	job_init_slab(32);
+	struct job* init_job = job_create(elf.header.e_entry, 0x80001000,
+					  "init", &pm);
+	klogf("Free blocks: %q/%q", sysutils_kernel_heap_get_free_count(),
+	      sysutils_kernel_heap_get_total_count());
+	sysutils_jump_eret_usermode(init_job);
 }
 
 void start()

@@ -96,3 +96,13 @@ void kfree(void* ptr)
 {
 	sysutils_kernel_heap_free(ptr);
 }
+
+size_t sysutils_kernel_heap_get_free_count()
+{
+	return heap_get_free_blocks(&main_heap);
+}
+
+size_t sysutils_kernel_heap_get_total_count()
+{
+	return main_heap.blocks;
+}
