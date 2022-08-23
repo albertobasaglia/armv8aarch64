@@ -18,19 +18,16 @@ BUILD_OBJS = timer/timer.o \
 	     mm/paging.o \
 	     sysutils.o \
 	     job.o \
-	     user.o \
 	     device/virtioblk.o \
 	     device/block.o \
-	     fs/fat.o
+	     fs/fat.o \
+	     elf/elf.o \
+	     elf/filebuffer.o
 
-all: kernel.elf hdd
+all: kernel.elf
 
 kernel.elf: _start.o linker.ld start.o _exceptions.o $(BUILD_OBJS)
 	$(LD) $(LDFLAGS) _start.o start.o _exceptions.o $(BUILD_OBJS) -o kernel.elf
-
-hdd:
-	qemu-img create hdd 32M
-	mkfs.fat -F16 hdd
 
 _start.o: start.asm
 	$(AS) start.asm -o _start.o

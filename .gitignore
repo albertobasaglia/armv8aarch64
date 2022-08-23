@@ -6,3 +6,4 @@ activateccenv
 .cache/
 compile_commands.json
 log.txt
+hdd

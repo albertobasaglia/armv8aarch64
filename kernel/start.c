@@ -3,7 +3,6 @@
 #include "job.h"
 #include "paging.h"
 #include "sysutils.h"
-#include "user.h"
 #include "virtioblk.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -68,8 +67,12 @@ void jump_usermode()
 	paging_manager_map_kernel(
 	    &pm); // every userprocess has the kernel mapped in!
 	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
-	struct job user_job = job_create((uint64_t)init, 0, "init", &pm);
-	sysutils_jump_eret_usermode(&user_job);
+	// TODO:
+	// - load executable section in memory
+	// - map it
+	// - execute it
+	/* struct job user_job = job_create((uint64_t)init, 0, "init", &pm); */
+	/* sysutils_jump_eret_usermode(&user_job); */
 }
 
 void try_disk()
@@ -85,6 +88,10 @@ void try_disk()
 
 	struct fat_handle fat = fat_load(&disk_block);
 	fat_debug_info(&fat);
+
+	struct fat16_dir_entry* entry = fat_get_entry_by_file(&fat, "init",
+							      "elf");
+	klogf("INIT.ELF filesize is %q", entry->filesize_bytes);
 
 	/* char buffer[512]; */
 

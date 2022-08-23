@@ -2,12 +2,6 @@ ENTRY(_start)
 
 SECTIONS
 {
-        . = 0x80000000;
-
-        .usertext : {user.o(.text)}
-        .userdata : {user.o(.data)}
-        .userbss : {user.o(.bss)}
-
         . = 0x40000000;
         EXCEPTION_TABLE = .;
         .exceptions_table : {_exceptions.o(.text)}

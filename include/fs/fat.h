@@ -133,7 +133,7 @@ void fat_get_fat_extension(char* dest, const char* src);
  * Returns an handle to a fat directory entry given its name.
  * TODO Only works in root directory.
  * */
-struct fat16_dir_entry* get_entry_by_file(struct fat_handle* handle,
+struct fat16_dir_entry* fat_get_entry_by_file(struct fat_handle* handle,
 					  const char* name,
 					  const char* ext);
 

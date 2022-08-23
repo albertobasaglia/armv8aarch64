@@ -10,7 +10,6 @@
 
 bool exceptions_handle_syscall(uint16_t imm)
 {
-
 	return 0;
 }
 
