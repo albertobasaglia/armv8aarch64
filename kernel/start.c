@@ -1,3 +1,4 @@
+#include "block.h"
 #include "job.h"
 #include "paging.h"
 #include "sysutils.h"
@@ -82,8 +83,11 @@ void try_disk()
 		klog("Disk init error!");
 	}
 
+	struct block disk_block = disk_register_block_device(&disk);
+
 	char buffer[512];
-	disk_create_request_sync(&disk, 0, buffer, 0);
+
+	block_read(&disk_block, buffer, 0);
 	klog(buffer);
 }
 

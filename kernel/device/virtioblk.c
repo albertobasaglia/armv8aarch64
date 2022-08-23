@@ -1,6 +1,7 @@
 #include "uart.h"
 #include <gic.h>
 #include <heap.h>
+#include <stddef.h>
 #include <virtioblk.h>
 
 #include <stdint.h>
@@ -10,29 +11,30 @@ extern struct heap main_heap;
 
 #define mb() asm volatile("dsb 0b1111" ::: "memory");
 
-uint32_t read_reg(struct virtioblk* disk, int offset)
+uint32_t disk_read_reg(struct virtioblk* disk, int offset)
 {
 	return *((uint32_t*)(disk->mmio + offset));
 }
 
-void set_reg(struct virtioblk* disk, int offset, uint32_t value)
+void disk_set_reg(struct virtioblk* disk, int offset, uint32_t value)
 {
 	*((volatile uint32_t*)(disk->mmio + offset)) = value;
 }
 
 int disk_check_magic(struct virtioblk* disk)
 {
-	return read_reg(disk, VIRTIO_MAGIC_OFFSET) == VIRTIO_DISK_MAGIC_VALUE;
+	return disk_read_reg(disk, VIRTIO_MAGIC_OFFSET) ==
+	       VIRTIO_DISK_MAGIC_VALUE;
 }
 
 int disk_get_version(struct virtioblk* disk)
 {
-	return read_reg(disk, VIRTIO_VERSION_OFFSET);
+	return disk_read_reg(disk, VIRTIO_VERSION_OFFSET);
 }
 
 int disk_get_device_id(struct virtioblk* disk)
 {
-	return read_reg(disk, VIRTIO_DEVICEID_OFFSET);
+	return disk_read_reg(disk, VIRTIO_DEVICEID_OFFSET);
 }
 
 int disk_init(struct virtioblk* disk, int offset)
@@ -52,53 +54,56 @@ int disk_init(struct virtioblk* disk, int offset)
 		return -3;
 	}
 
-	set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, 0);
+	disk_set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, 0);
 	mb();
-	set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, VIRTIO_STATUS_ACK);
+	disk_set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, VIRTIO_STATUS_ACK);
 	mb();
-	set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, VIRTIO_STATUS_DRIVER);
+	disk_set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, VIRTIO_STATUS_DRIVER);
 	mb();
-	uint32_t feat = read_reg(disk, VIRTIO_DEV_FEATURES_OFFSET);
+	uint32_t feat = disk_read_reg(disk, VIRTIO_DEV_FEATURES_OFFSET);
 	mb();
 
-	set_reg(disk, VIRTIO_DEV_FEATURESSELECT_OFFSET,
-		feat); // set all the features
+	disk_set_reg(disk, VIRTIO_DEV_FEATURESSELECT_OFFSET,
+		     feat); // set all the features
 	mb();
-	set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, VIRTIO_STATUS_FEATURES_OK);
-	if (read_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET) !=
+	disk_set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET,
+		     VIRTIO_STATUS_FEATURES_OK);
+	if (disk_read_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET) !=
 	    VIRTIO_STATUS_FEATURES_OK) {
 		// device did not accept our features
 		return -4;
 	}
 	mb();
 	// queue 0x0
-	set_reg(disk, VIRTIO_QUEUE_INDEX_OFFSET, 0);
-	if (read_reg(disk, VIRTIO_QUEUE_READY_OFFSET) != 0x0) {
+	disk_set_reg(disk, VIRTIO_QUEUE_INDEX_OFFSET, 0);
+	if (disk_read_reg(disk, VIRTIO_QUEUE_READY_OFFSET) != 0x0) {
 		// queue already in use
 		return -5;
 	}
 	int queue_size = QUEUE_SIZE;
-	set_reg(disk, VIRTIO_QUEUE_SIZE_OFFSET,
-		queue_size); // set queue size to 8
+	disk_set_reg(disk, VIRTIO_QUEUE_SIZE_OFFSET,
+		     queue_size); // set queue size to 8
 	disk->descriptors = heap_alloc(&main_heap,
 				       sizeof(Virtq_desc) * queue_size);
 	disk->avail = heap_alloc(&main_heap, sizeof(Virtq_avail));
 	disk->used = heap_alloc(&main_heap, sizeof(Virtq_used));
 
 	// TODO split the addresses!
-	set_reg(disk, VIRTIO_QUEUE_DESCRIPTOR_LOW_OFFSET,
-		(uint32_t)disk->descriptors);
-	set_reg(disk, VIRTIO_QUEUE_DESCRIPTOR_HIGH_OFFSET, 0);
-	set_reg(disk, VIRTIO_QUEUE_AVAILABLE_LOW_OFFSET, (uint32_t)disk->avail);
-	set_reg(disk, VIRTIO_QUEUE_AVAILABLE_HIGH_OFFSET, 0);
-	set_reg(disk, VIRTIO_QUEUE_USED_LOW_OFFSET, (uint32_t)disk->used);
-	set_reg(disk, VIRTIO_QUEUE_USED_HIGH_OFFSET, 0);
+	disk_set_reg(disk, VIRTIO_QUEUE_DESCRIPTOR_LOW_OFFSET,
+		     (uint32_t)disk->descriptors);
+	disk_set_reg(disk, VIRTIO_QUEUE_DESCRIPTOR_HIGH_OFFSET, 0);
+	disk_set_reg(disk, VIRTIO_QUEUE_AVAILABLE_LOW_OFFSET,
+		     (uint32_t)disk->avail);
+	disk_set_reg(disk, VIRTIO_QUEUE_AVAILABLE_HIGH_OFFSET, 0);
+	disk_set_reg(disk, VIRTIO_QUEUE_USED_LOW_OFFSET, (uint32_t)disk->used);
+	disk_set_reg(disk, VIRTIO_QUEUE_USED_HIGH_OFFSET, 0);
 
 	mb();
 
-	set_reg(disk, VIRTIO_QUEUE_READY_OFFSET, 1); // queue is ready
+	disk_set_reg(disk, VIRTIO_QUEUE_READY_OFFSET, 1); // queue is ready
 	// setup virtqueues:
-	set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET, VIRTIO_STATUS_DRIVER_OK);
+	disk_set_reg(disk, VIRTIO_DEVICE_STATUS_OFFSET,
+		     VIRTIO_STATUS_DRIVER_OK);
 
 	mb();
 	return 0;
@@ -159,7 +164,7 @@ int disk_create_request_sync(struct virtioblk* disk,
 
 	gic_redistributor_set_handler(79, handler, param);
 
-	set_reg(disk, VIRTIO_QUEUE_NOTIFY_OFFSET, 0);
+	disk_set_reg(disk, VIRTIO_QUEUE_NOTIFY_OFFSET, 0);
 	mb();
 
 	while (!sync->done) {
@@ -178,12 +183,35 @@ void disk_handle_interrupt_sync(int id, void* argument)
 {
 	Sync_read* sync = (Sync_read*)argument;
 	struct virtioblk* disk = sync->disk;
-	int interrupt = read_reg(disk, VIRTIO_INTERRUPT_STATUS_OFFSET);
-	set_reg(disk, VIRTIO_INTERRUPT_ACK_OFFSET, interrupt);
+	int interrupt = disk_read_reg(disk, VIRTIO_INTERRUPT_STATUS_OFFSET);
+	disk_set_reg(disk, VIRTIO_INTERRUPT_ACK_OFFSET, interrupt);
 	disk_handle_used(disk);
 	sync->done = 1;
-#ifdef DEBUG
-	klog("Operation finished!");
-#endif
 	disk_handle_used(disk);
+}
+
+int disk_block_read(void* ptr, size_t n, void* args)
+{
+	struct virtioblk* virtioblk = (struct virtioblk*)args;
+	int res = disk_create_request_sync(virtioblk, 0, (char*)ptr, n);
+	return res;
+}
+
+int disk_block_write(const void* ptr, size_t n, void* args)
+{
+	struct virtioblk* virtioblk = (struct virtioblk*)args;
+	int res = disk_create_request_sync(virtioblk, 1, (char*)ptr, n);
+	return res;
+}
+
+struct block disk_register_block_device(struct virtioblk* disk)
+{
+	struct block block = {
+	    .args = (void*)disk,
+	    .read = disk_block_read,
+	    .write = disk_block_write,
+	    .read_only = false,
+	    .sector_size = 512,
+	};
+	return block;
 }

@@ -1,6 +1,7 @@
 #ifndef VIRTIO_BLK
 #define VIRTIO_BLK
 
+#include "block.h"
 #include <stdint.h>
 
 #define VIRTIO_DISK_BASE_ADDRESS            0xa000000ull
@@ -135,9 +136,9 @@ typedef struct {
 /*
  * Driver functions
  * */
-uint32_t read_reg(struct virtioblk* disk, int offset);
+uint32_t disk_read_reg(struct virtioblk* disk, int offset);
 
-void set_reg(struct virtioblk* disk, int offset, uint32_t value);
+void disk_set_reg(struct virtioblk* disk, int offset, uint32_t value);
 
 int disk_check_magic(struct virtioblk* disk);
 
@@ -158,5 +159,7 @@ int disk_create_request_sync(struct virtioblk* disk,
 			     int sector);
 
 void disk_handle_interrupt_sync(int id, void* argument);
+
+struct block disk_register_block_device(struct virtioblk* disk);
 
 #endif

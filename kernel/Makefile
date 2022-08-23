@@ -19,7 +19,8 @@ BUILD_OBJS = timer/timer.o \
 	     sysutils.o \
 	     job.o \
 	     user.o \
-	     device/virtioblk.o
+	     device/virtioblk.o \
+	     device/block.o
 
 all: kernel.elf hdd
 
