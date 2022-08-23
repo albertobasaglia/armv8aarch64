@@ -1,7 +1,10 @@
 #include "log.h"
 #include "paging.h"
+#include <heap.h>
 #include <stdint.h>
 #include <sysutils.h>
+
+struct heap main_heap;
 
 void sysutils_daif_set(int bit)
 {
@@ -49,4 +52,37 @@ void sysutils_jump_eret_usermode(struct job* job)
 		     "msr SP_EL0, %1\n"
 		     "eret" ::"r"(job->pc),
 		     "r"(job->sp));
+}
+
+void sysutils_kernel_heap_create(size_t table_address,
+				 size_t heap_address,
+				 size_t heap_blocks_size)
+{
+	main_heap = heap_createtable((char*)heap_address, (char*)table_address,
+				     heap_blocks_size);
+}
+
+void sysutils_kernel_heap_destroy()
+{
+	// TODO
+}
+
+void* sysutils_kernel_heap_alloc(size_t size)
+{
+	return heap_alloc(&main_heap, size);
+}
+
+void sysutils_kernel_heap_free(void* ptr)
+{
+	heap_free(&main_heap, ptr);
+}
+
+void* kalloc(size_t size)
+{
+	return sysutils_kernel_heap_alloc(size);
+}
+
+void kfree(void* ptr)
+{
+	sysutils_kernel_heap_free(ptr);
 }

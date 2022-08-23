@@ -19,7 +19,6 @@ extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
 extern char HEAP_START;
 
-struct heap main_heap;
 struct slab paging_slab;
 
 void handle_timer_int(int id, void* arg)
@@ -48,10 +47,8 @@ void setup_heap()
 	int heap_size_blocks = 1024; // 4MB
 	size_t table_address = (size_t)&HEAP_START;
 	size_t heap_address = table_address + heap_table_size(heap_size_blocks);
-	main_heap = heap_createtable((char*)heap_address, (char*)table_address,
-				     heap_size_blocks);
-	klogf("Created table at 0x%x", table_address);
-	klogf("Created heap at 0x%x", heap_address);
+	sysutils_kernel_heap_create(table_address, heap_address,
+				    heap_size_blocks);
 }
 
 void enable_paging_test()
@@ -96,8 +93,7 @@ void start()
 	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
 	setup_heap();
 
-	void* slab_memory = heap_alloc(
-	    &main_heap,
+	void* slab_memory = kalloc(
 	    slab_get_needed_size(sizeof(struct page_table_store), 128));
 
 	klogf("Slab memory allocated at 0x%x", slab_memory);
