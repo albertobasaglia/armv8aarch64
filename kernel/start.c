@@ -38,6 +38,7 @@ void enable_gic()
 	gic_interface_enablegroups();
 	gic_interface_setprioritymask(0xff);
 	gic_redistributor_enable_id(30);
+	// 79 is the virtioblk interrupt
 	gic_distributor_set_priority(79, 0);
 	gic_distributor_set_target(79, 1);
 	gic_distributor_enable_id(79);

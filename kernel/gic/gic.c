@@ -61,9 +61,6 @@ void gic_distributor_set_priority(int id, uint8_t priority)
 	volatile uint32_t* GICD_ISENABLER = (uint32_t*)(GIC_DIST + 0x400);
 	GICD_ISENABLER += reg;
 
-	klogf("Mask: %x", mask);
-	klogf("Shifted: %x", shifted);
-
 	*GICD_ISENABLER &= mask;
 	*GICD_ISENABLER |= shifted;
 }

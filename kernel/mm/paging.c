@@ -1,3 +1,4 @@
+#include "log.h"
 #include <paging.h>
 #include <slab.h>
 #include <stdbool.h>
@@ -51,7 +52,7 @@ void paging_set_tcr()
 {
 	uint64_t tcr_ips = 0b10;
 	tcr_ips = tcr_ips << 32;
-	tcr_ips |= 32;
+	tcr_ips |= 25; // using l1 with virtual space: 2^(64-25) = 512GB
 	asm volatile("mrs x0, TCR_EL1\n"
 		     "orr x0, x0, %0\n"
 		     "msr TCR_EL1, x0" ::"r"(tcr_ips)
