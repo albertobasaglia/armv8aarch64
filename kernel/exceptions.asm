@@ -37,6 +37,34 @@ excbreak:
 //lower_aarch64
 // SYNC
 .balign 0x80
+        b loweraa64_svc
+// IRQ
+.balign 0x80
+        b .
+// FIQ
+.balign 0x80
+        b loweraa64_fiq
+// SERROR
+.balign 0x80
+        b .
+
+//lower_aarch32
+// SYNC
+.balign 0x80
+        b .
+// IRQ
+.balign 0x80
+        b .
+// FIQ
+.balign 0x80
+        b .
+// SERROR
+.balign 0x80
+        b .
+
+.balign 0x1000
+
+loweraa64_svc:
         // stack is FULL DESCENDING
         // save context
         stp x0, x1, [sp, #-16]!
@@ -75,11 +103,8 @@ excbreak:
         ldp x2, x3, [sp], #16
         ldp x0, x1, [sp], #16
         eret
-// IRQ
-.balign 0x80
-        b .
-// FIQ
-.balign 0x80
+
+loweraa64_fiq:
         // stack is FULL DESCENDING
         // save context
         stp x0, x1, [sp, #-16]!
@@ -118,20 +143,3 @@ excbreak:
         ldp x2, x3, [sp], #16
         ldp x0, x1, [sp], #16
         eret
-// SERROR
-.balign 0x80
-        b .
-
-//lower_aarch32
-// SYNC
-.balign 0x80
-        b .
-// IRQ
-.balign 0x80
-        b .
-// FIQ
-.balign 0x80
-        b .
-// SERROR
-.balign 0x80
-        b .
