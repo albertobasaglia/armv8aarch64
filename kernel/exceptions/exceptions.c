@@ -1,4 +1,4 @@
-#include "log.h"
+#include <log.h>
 #include <gic.h>
 #include <stdbool.h>
 #include <timer.h>

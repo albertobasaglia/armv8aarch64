@@ -1,5 +1,5 @@
-#include "log.h"
-#include "slab.h"
+#include <log.h>
+#include <slab.h>
 #include <gic.h>
 
 #include <stdint.h>

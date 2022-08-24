@@ -1,5 +1,5 @@
-#include "timer.h"
-#include "uart.h"
+#include <timer.h>
+#include <uart.h>
 #include <log.h>
 #include <stdarg.h>
 #include <stddef.h>

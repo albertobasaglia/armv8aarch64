@@ -1,7 +1,7 @@
 #ifndef SYSUTILS_H
 #define SYSUTILS_H
 
-#include <job.h>
+#include <mp/job.h>
 #include <paging.h>
 
 #include <stdbool.h>

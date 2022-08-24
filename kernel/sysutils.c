@@ -1,5 +1,5 @@
-#include "log.h"
-#include "paging.h"
+#include <log.h>
+#include <paging.h>
 #include <heap.h>
 #include <stdint.h>
 #include <string.h>

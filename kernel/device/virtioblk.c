@@ -1,5 +1,5 @@
-#include "sysutils.h"
-#include "uart.h"
+#include <sysutils.h>
+#include <uart.h>
 #include <gic.h>
 #include <heap.h>
 #include <stddef.h>
