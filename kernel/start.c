@@ -1,9 +1,11 @@
-#include "mp/sched.h"
+#include "fs/fat_fs.h"
+#include "fs/fs.h"
 #include <block.h>
 #include <elf/elf.h>
 #include <elf/filebuffer.h>
 #include <fs/fat.h>
 #include <mp/job.h>
+#include <mp/sched.h>
 #include <paging.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -62,6 +64,34 @@ void enable_paging_test()
 	paging_manager_map_kernel(&paging_kernel);
 	paging_manager_apply(&paging_kernel);
 	klog("Paging enabled");
+}
+
+void testfs()
+{
+	// Read the elf file from the disk
+	struct virtioblk disk;
+	if (disk_init(&disk, 31) == 0) {
+		klog("Disk init is successful");
+	} else {
+		klog("Disk init error!");
+	}
+
+	struct block disk_block = disk_register_block_device(&disk);
+
+	struct fat_handle fat = fat_load(&disk_block);
+	/* fat_debug_info(&fat); */
+
+	fs_init_slab();
+	struct inode* inode = fatfs_open(&fat, "");
+
+	char buffer[50000];
+
+	fs_inode_read(inode, buffer);
+
+	for (int i = 0; i < 50; i++)
+		put_char(buffer[i]);
+
+	fs_inode_close(inode);
 }
 
 void usermode()
@@ -154,5 +184,6 @@ void start()
 	enable_paging_test();
 
 	/* debug_paging(); */
-	usermode();
+	/* usermode(); */
+	testfs();
 }

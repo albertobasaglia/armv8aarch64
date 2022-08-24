@@ -1,7 +1,7 @@
 #ifndef MP_SCHED_H
 #define MP_SCHED_H
 
-#include "job.h"
+#include <mp/job.h>
 #include <stdint.h>
 
 /*
