@@ -34,6 +34,8 @@ void sysutils_kernel_heap_free(void* ptr);
 
 void* kalloc(size_t size);
 
+void* kzalloc(size_t size);
+
 void kfree(void* ptr);
 
 size_t sysutils_kernel_heap_get_free_count();

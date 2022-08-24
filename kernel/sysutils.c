@@ -2,6 +2,7 @@
 #include "paging.h"
 #include <heap.h>
 #include <stdint.h>
+#include <string.h>
 #include <sysutils.h>
 
 struct heap main_heap;
@@ -90,6 +91,13 @@ void sysutils_kernel_heap_free(void* ptr)
 void* kalloc(size_t size)
 {
 	return sysutils_kernel_heap_alloc(size);
+}
+
+void* kzalloc(size_t size)
+{
+	void* res = sysutils_kernel_heap_alloc(size);
+	memset(res, 0, size);
+	return res;
 }
 
 void kfree(void* ptr)

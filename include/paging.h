@@ -1,3 +1,8 @@
+/*
+ * DISCLAMER: This implementation contains a ton of magic numbers and hardcoded
+ * stuff which is extremely bound to the architecture. Since this is a very
+ * complex part of the kernel, I want a simple implementation to start with.
+ * */
 #ifndef PAGING_H
 #define PAGING_H
 
@@ -8,6 +13,7 @@
 
 #define PAGING_L012_VALID              (1 << 0)
 #define PAGING_L012_TABLE              (1 << 1)
+
 // L0 doesn't accept a block
 #define PAGING_L1_BLOCK_ADDRESS_MASK   (0x3ffffull << 30)
 #define PAGING_L2_BLOCK_ADDRESS_MASK   (0x7ffffffull << 21)
@@ -34,6 +40,10 @@ uint64_t paging_l012_create_entry_block(uint64_t block_address,
  * */
 uint64_t paging_l012_create_entry_table(uint64_t table_address);
 
+uint64_t paging_l3_create_entry_block(uint64_t block_address,
+				      bool unprivileged_access,
+				      bool read_only);
+
 /*
  * Creates an invalid entry
  * */
@@ -56,13 +66,21 @@ void paging_set_tcr();
  * */
 void paging_enable();
 
+/*
+ * Entries can both point to the next page table or to a block of memory.
+ * */
 #define PAGING_ENTRIES_PER_TABLE 512
-struct page_table_store {
-	uint64_t entries[PAGING_ENTRIES_PER_TABLE];
+union page_table_store {
+	struct {
+		uint64_t block[PAGING_ENTRIES_PER_TABLE];
+	};
+	struct {
+		union page_table_store* next_table[PAGING_ENTRIES_PER_TABLE];
+	};
 };
 
 struct paging_manager {
-	struct page_table_store* l1;
+	union page_table_store* l1;
 	struct slab* pages_allocator;
 };
 
@@ -83,10 +101,46 @@ void paging_manager_init(struct paging_manager* paging_manager,
  * */
 void paging_manager_map_kernel(struct paging_manager* paging_manager);
 
+/*
+ * Maps 1gb (1 entry in level 1 paging)
+ * */
 void paging_manager_map_1gb(struct paging_manager* paging_manager,
 			    uint64_t va,
 			    uint64_t pa,
 			    bool unprivileged_access,
 			    bool read_only);
+
+void paging_manager_map_page(struct paging_manager* paging_manager,
+			     uint64_t va,
+			     uint64_t pa,
+			     bool unprivileged_access,
+			     bool read_only);
+
+/*
+ * Splits address in offsets inside the page tables.
+ * If passed pointer is NULL, that part is not calculated.
+ * */
+void paging_split_address(uint64_t address,
+			  uint64_t* l1,
+			  uint64_t* l2,
+			  uint64_t* l3,
+			  uint64_t* off);
+
+int paging_try_map(union page_table_store* page_table_store,
+		   uint64_t offset,
+		   uint64_t value);
+
+/*
+ * Allocates a new table and sets all the entries to invalid.
+ * */
+union page_table_store* paging_allocate_table(struct paging_manager* pm);
+
+int paging_insert_or_alloc(struct paging_manager* paging_manager,
+			   union page_table_store* page_table_store,
+			   int level,
+			   uint64_t va,
+			   uint64_t pa,
+			   bool unprivileged_access,
+			   bool read_only);
 
 #endif

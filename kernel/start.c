@@ -115,17 +115,28 @@ void usermode()
 	sysutils_jump_eret_usermode(init_job);
 }
 
+void debug_paging()
+{
+	paging_manager_map_page(&paging_kernel, 0x100000000, 0x40000000, 0, 0);
+	paging_manager_map_page(&paging_kernel, 0x100001000, 0x40000000, 0, 0);
+	char* a = (char*)0x100001005;
+	char* b = (char*)0x40000005;
+	*a = 'a';
+	put_char(*b);
+	put_char('\n');
+}
+
 void start()
 {
 	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
 	setup_heap();
 
 	void* slab_memory = kalloc(
-	    slab_get_needed_size(sizeof(struct page_table_store), 128));
+	    slab_get_needed_size(sizeof(union page_table_store), 128));
 
 	klogf("Slab memory allocated at 0x%x", slab_memory);
 
-	paging_slab = slab_create(sizeof(struct page_table_store), 128,
+	paging_slab = slab_create(sizeof(union page_table_store), 128,
 				  slab_memory);
 
 	sysutils_mask_fiq(false);
@@ -140,7 +151,10 @@ void start()
 
 	enable_paging_test();
 
+	debug_paging();
 	klog("Kernel finished");
+	while (1)
+		;
 
 	usermode();
 }
