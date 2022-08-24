@@ -1,3 +1,4 @@
+#include "mp/sched.h"
 #include <block.h>
 #include <elf/elf.h>
 #include <elf/filebuffer.h>
@@ -108,10 +109,11 @@ void usermode()
 
 	klogf("Jumping to 0x%x (entry point)", elf.header.e_entry);
 	job_init_slab(32);
-	struct job* init_job = job_create(elf.header.e_entry, 0x80001000,
-					  "init", &pm);
+	struct job* init_job = job_init_and_create(elf.header.e_entry,
+						   0x80001000, "init", &pm);
 	klogf("Free blocks: %q/%q", sysutils_kernel_heap_get_free_count(),
 	      sysutils_kernel_heap_get_total_count());
+	scheduling_register_routine();
 	sysutils_jump_eret_usermode(init_job);
 }
 

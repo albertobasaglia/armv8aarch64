@@ -1,5 +1,6 @@
 int main()
 {
+	asm volatile("svc 17");
 	int a = 5;
 	int b = -5;
 	int c = a + b;

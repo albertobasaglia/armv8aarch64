@@ -17,12 +17,13 @@ BUILD_OBJS = timer/timer.o \
 	     log.o \
 	     mm/paging.o \
 	     sysutils.o \
-	     job.o \
 	     device/virtioblk.o \
 	     device/block.o \
 	     fs/fat.o \
 	     elf/elf.o \
-	     elf/filebuffer.o
+	     elf/filebuffer.o \
+	     mp/sched.o \
+	     mp/job.o
 
 all: kernel.elf
 

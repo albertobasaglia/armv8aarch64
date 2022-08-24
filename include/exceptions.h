@@ -32,7 +32,7 @@ uint64_t exceptions_getesr();
  *  - Coming from EL1: just reload the timer since there is no usermode process
  *                     to switch
  * */
-void exceptions_handle_fiq();
+void exceptions_handle_fiq(uint64_t* x30);
 
 bool exceptions_handle_syscall(uint16_t imm);
 

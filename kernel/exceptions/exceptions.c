@@ -1,5 +1,6 @@
-#include <log.h>
 #include <gic.h>
+#include <log.h>
+#include <mp/job.h>
 #include <stdbool.h>
 #include <timer.h>
 #include <uart.h>
@@ -16,7 +17,8 @@ bool exceptions_handle_syscall(uint16_t imm)
 		while (1)
 			;
 	} else if (imm == 17) {
-		klog("DUMMY syscall");
+		klog("Ping syscall from process:");
+		klog(job_get_current()->name);
 		return 1;
 	}
 	return 0;
@@ -51,9 +53,15 @@ void exceptions_distributor(uint64_t* x30)
 	}
 }
 
-void exceptions_handle_fiq()
+uint64_t* exceptions_context_switch_x30;
+
+void exceptions_handle_fiq(uint64_t* x30)
 {
 	int intid = gic_interface_read_and_ack_group0();
+
+	if (intid == 30)
+		exceptions_context_switch_x30 = x30;
+
 	Handler* handler = gic_redistributor_get_handler(intid);
 	if (handler != NULL) {
 		void* param = gic_redistributor_get_handler_param(intid);
