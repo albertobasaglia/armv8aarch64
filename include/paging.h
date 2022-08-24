@@ -110,11 +110,14 @@ void paging_manager_map_1gb(struct paging_manager* paging_manager,
 			    bool unprivileged_access,
 			    bool read_only);
 
-void paging_manager_map_page(struct paging_manager* paging_manager,
-			     uint64_t va,
-			     uint64_t pa,
-			     bool unprivileged_access,
-			     bool read_only);
+/*
+ * Manually maps a page
+ * */
+int paging_manager_map_page(struct paging_manager* paging_manager,
+			    uint64_t va,
+			    uint64_t pa,
+			    bool unprivileged_access,
+			    bool read_only);
 
 /*
  * Splits address in offsets inside the page tables.

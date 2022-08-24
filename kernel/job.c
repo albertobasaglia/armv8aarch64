@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-struct slab job_slab;
+static struct slab job_slab;
 
 struct job* job_create(uint64_t entry,
 		       uint64_t sp,

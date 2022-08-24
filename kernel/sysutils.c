@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sysutils.h>
 
-struct heap main_heap;
+static struct heap main_heap;
 
 void sysutils_daif_set(int bit)
 {

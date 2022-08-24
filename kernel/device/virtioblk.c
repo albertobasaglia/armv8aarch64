@@ -1,3 +1,4 @@
+#include "sysutils.h"
 #include "uart.h"
 #include <gic.h>
 #include <heap.h>
@@ -6,8 +7,6 @@
 
 #include <stdint.h>
 #include <string.h>
-
-extern struct heap main_heap;
 
 #define mb() asm volatile("dsb 0b1111" ::: "memory");
 
@@ -83,10 +82,9 @@ int disk_init(struct virtioblk* disk, int offset)
 	int queue_size = QUEUE_SIZE;
 	disk_set_reg(disk, VIRTIO_QUEUE_SIZE_OFFSET,
 		     queue_size); // set queue size to 8
-	disk->descriptors = heap_alloc(&main_heap,
-				       sizeof(Virtq_desc) * queue_size);
-	disk->avail = heap_alloc(&main_heap, sizeof(Virtq_avail));
-	disk->used = heap_alloc(&main_heap, sizeof(Virtq_used));
+	disk->descriptors = kalloc(sizeof(Virtq_desc) * queue_size);
+	disk->avail = kalloc(sizeof(Virtq_avail));
+	disk->used = kalloc(sizeof(Virtq_used));
 
 	// TODO split the addresses!
 	disk_set_reg(disk, VIRTIO_QUEUE_DESCRIPTOR_LOW_OFFSET,
@@ -155,7 +153,7 @@ int disk_create_request_sync(struct virtioblk* disk,
 
 	mb();
 
-	volatile Sync_read* sync = heap_alloc(&main_heap, sizeof(Sync_read));
+	volatile Sync_read* sync = kalloc(sizeof(Sync_read));
 	sync->disk = disk;
 	sync->done = 0;
 
@@ -170,7 +168,7 @@ int disk_create_request_sync(struct virtioblk* disk,
 	while (!sync->done) {
 	}
 
-	heap_free(&main_heap, (void*)sync);
+	kfree((void*)sync);
 	return 0;
 }
 

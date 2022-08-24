@@ -146,18 +146,22 @@ void paging_split_address(uint64_t address,
 		*off = address;
 }
 
-void paging_manager_map_page(struct paging_manager* paging_manager,
-			     uint64_t va,
-			     uint64_t pa,
-			     bool unprivileged_access,
-			     bool read_only)
+int paging_manager_map_page(struct paging_manager* paging_manager,
+			    uint64_t va,
+			    uint64_t pa,
+			    bool unprivileged_access,
+			    bool read_only)
 {
 	int res = paging_insert_or_alloc(paging_manager, paging_manager->l1, 1,
 					 va, pa, unprivileged_access,
 					 read_only);
 
+	if (res)
+		return res;
+
 	asm volatile("tlbi vmalle1\n"
 		     "dsb sy");
+	return 0;
 }
 
 int paging_try_map(union page_table_store* page_table_store,

@@ -31,7 +31,7 @@ void exceptions_distributor(uint64_t* x30)
 	asm volatile("mrs %0, ELR_EL1" : "=r"(pc));
 	/* klogf("Program counter: 0x%x", pc); */
 	uint64_t esr = exceptions_getesr();
-	klogf("ESR: 0x%x", esr);
+	/* klogf("ESR: 0x%x", esr); */
 	uint64_t ec = (esr >> ESR_EC_OFFSET) & ESR_EC_MASK;
 	if (ec == ESR_EC_DATABT_SAME) {
 		klog("Data abort from same EL");

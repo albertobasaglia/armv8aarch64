@@ -21,8 +21,8 @@ extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
 extern char HEAP_START;
 
-struct slab paging_slab;
-struct paging_manager paging_kernel;
+static struct slab paging_slab;
+static struct paging_manager paging_kernel;
 
 void handle_timer_int(int id, void* arg)
 {
@@ -76,11 +76,11 @@ void usermode()
 	struct block disk_block = disk_register_block_device(&disk);
 
 	struct fat_handle fat = fat_load(&disk_block);
-	fat_debug_info(&fat);
+	/* fat_debug_info(&fat); */
 
 	struct fat16_dir_entry* entry = fat_get_entry_by_file(&fat, "init",
 							      "elf");
-	klogf("INIT.ELF filesize is %q", entry->filesize_bytes);
+	/* klogf("INIT.ELF filesize is %q", entry->filesize_bytes); */
 
 	char* init_mem = kalloc(entry->filesize_bytes);
 	fat_read_entry(&fat, entry, init_mem);
@@ -91,9 +91,9 @@ void usermode()
 	elf_alloc_and_parse(&elf);
 
 	int ph_count = elf_get_programheader_count(&elf);
-	klogf("Program header count is %q", ph_count);
+	/* klogf("Program header count is %q", ph_count); */
 	ElfN_Phdr* program_header = elf_get_programheader_byid(&elf, 0);
-	klogf("Program header 0 size is %q", program_header->p_filesz);
+	/* klogf("Program header 0 size is %q", program_header->p_filesz); */
 
 	// Create the job
 	struct paging_manager pm;
@@ -151,10 +151,6 @@ void start()
 
 	enable_paging_test();
 
-	debug_paging();
-	klog("Kernel finished");
-	while (1)
-		;
-
+	/* debug_paging(); */
 	usermode();
 }
