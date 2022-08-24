@@ -1,8 +1,8 @@
-#include <sysutils.h>
-#include <uart.h>
 #include <gic.h>
 #include <heap.h>
 #include <stddef.h>
+#include <sysutils.h>
+#include <uart.h>
 #include <virtioblk.h>
 
 #include <stdint.h>
@@ -88,12 +88,12 @@ int disk_init(struct virtioblk* disk, int offset)
 
 	// TODO split the addresses!
 	disk_set_reg(disk, VIRTIO_QUEUE_DESCRIPTOR_LOW_OFFSET,
-		     (uint32_t)disk->descriptors);
+		     (uint64_t)disk->descriptors);
 	disk_set_reg(disk, VIRTIO_QUEUE_DESCRIPTOR_HIGH_OFFSET, 0);
 	disk_set_reg(disk, VIRTIO_QUEUE_AVAILABLE_LOW_OFFSET,
-		     (uint32_t)disk->avail);
+		     (uint64_t)disk->avail);
 	disk_set_reg(disk, VIRTIO_QUEUE_AVAILABLE_HIGH_OFFSET, 0);
-	disk_set_reg(disk, VIRTIO_QUEUE_USED_LOW_OFFSET, (uint32_t)disk->used);
+	disk_set_reg(disk, VIRTIO_QUEUE_USED_LOW_OFFSET, (uint64_t)disk->used);
 	disk_set_reg(disk, VIRTIO_QUEUE_USED_HIGH_OFFSET, 0);
 
 	mb();
