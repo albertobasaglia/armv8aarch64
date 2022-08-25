@@ -9,11 +9,15 @@ struct fat_inode {
 	struct fat_handle* fat_handle;
 };
 
+struct filesystem* fatfs_createfs(struct block* block);
+
+void fatfs_deletefs(struct filesystem* filesystem);
+
 /*
  * Opens a file.
  * Allocates its inode.
  * */
-struct inode* fatfs_open(struct fat_handle* fat_handle, const char* filename);
+struct inode* fatfs_open(struct filesystem* filesystem, const char* filename);
 
 int fatfs_read(struct inode* inode, void* ptr);
 

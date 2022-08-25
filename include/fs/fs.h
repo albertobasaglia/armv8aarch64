@@ -30,6 +30,12 @@ struct inode {
 	struct inode_vtable vtable;
 };
 
+struct filesystem {
+	struct inode* (*open)(struct filesystem* filesystem,
+			      const char* filename);
+	void* arguments;
+};
+
 void fs_init_slab();
 
 struct inode* fs_allocate_inode();

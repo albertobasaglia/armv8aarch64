@@ -1,6 +1,6 @@
+#include <heap.h>
 #include <log.h>
 #include <paging.h>
-#include <heap.h>
 #include <stdint.h>
 #include <string.h>
 #include <sysutils.h>
@@ -113,4 +113,10 @@ size_t sysutils_kernel_heap_get_free_count()
 size_t sysutils_kernel_heap_get_total_count()
 {
 	return main_heap.blocks;
+}
+
+void sysutils_log_free_heap()
+{
+	klogf("Free blocks: %q/%q", sysutils_kernel_heap_get_free_count(),
+	      sysutils_kernel_heap_get_total_count());
 }

@@ -42,4 +42,6 @@ size_t sysutils_kernel_heap_get_free_count();
 
 size_t sysutils_kernel_heap_get_total_count();
 
+void sysutils_log_free_heap();
+
 #endif

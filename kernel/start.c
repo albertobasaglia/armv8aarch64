@@ -68,6 +68,7 @@ void enable_paging_test()
 
 void testfs()
 {
+	fs_init_slab();
 	// Read the elf file from the disk
 	struct virtioblk disk;
 	if (disk_init(&disk, 31) == 0) {
@@ -77,12 +78,8 @@ void testfs()
 	}
 
 	struct block disk_block = disk_register_block_device(&disk);
-
-	struct fat_handle fat = fat_load(&disk_block);
-	/* fat_debug_info(&fat); */
-
-	fs_init_slab();
-	struct inode* inode = fatfs_open(&fat, "");
+	struct filesystem* fs = fatfs_createfs(&disk_block);
+	struct inode* inode = fs->open(fs, "init.elf");
 
 	char buffer[50000];
 
@@ -92,6 +89,7 @@ void testfs()
 		put_char(buffer[i]);
 
 	fs_inode_close(inode);
+	fatfs_deletefs(fs);
 }
 
 void usermode()
@@ -141,8 +139,6 @@ void usermode()
 	job_init_slab(32);
 	struct job* init_job = job_init_and_create(elf.header.e_entry,
 						   0x80001000, "init", &pm);
-	klogf("Free blocks: %q/%q", sysutils_kernel_heap_get_free_count(),
-	      sysutils_kernel_heap_get_total_count());
 	scheduling_register_routine();
 	sysutils_jump_eret_usermode(init_job);
 }
