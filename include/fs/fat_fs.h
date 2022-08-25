@@ -19,6 +19,8 @@ void fatfs_deletefs(struct filesystem* filesystem);
  * */
 struct inode* fatfs_open(struct filesystem* filesystem, const char* filename);
 
+int fatfs_get(struct inode* inode, char* ptr);
+
 int fatfs_read(struct inode* inode, void* ptr);
 
 int fatfs_close(struct inode* inode);

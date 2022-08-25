@@ -23,9 +23,14 @@ void fs_free_inode(struct inode* inode)
 	slab_free(&inode_slab, inode);
 }
 
-int fs_inode_read(struct inode* inode, const char* ptr)
+int fs_inode_get(struct inode* inode, char* ptr)
 {
-	return inode->vtable.read(inode, (void*)ptr);
+	return inode->vtable.get(inode, ptr);
+}
+
+int fs_inode_put(struct inode* inode, char c)
+{
+	return inode->vtable.put(inode, c);
 }
 
 int fs_inode_close(struct inode* inode)

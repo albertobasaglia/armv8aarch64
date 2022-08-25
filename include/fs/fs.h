@@ -10,19 +10,19 @@ struct inode;
 
 struct inode_vtable {
 	/*
-	 * This reads data from the file. At the moment all data is dumped.
+	 * Reads char form file.
 	 * */
-	int (*read)(struct inode* impl_inode, void* ptr);
+	int (*get)(struct inode* impl_inode, char* ptr);
+
+	/*
+	 * Puts a char in a file.
+	 * */
+	int (*put)(struct inode* impl_inode, char c);
 
 	/*
 	 * This should close the file (and free the impl_inode memory)
 	 * */
 	int (*close)(struct inode* impl_inode);
-	/*
-	 * - write
-	 * - create
-	 * - delete
-	 * */
 };
 
 struct inode {
@@ -33,6 +33,9 @@ struct inode {
 struct filesystem {
 	struct inode* (*open)(struct filesystem* filesystem,
 			      const char* filename);
+
+	struct inode* (*create)(struct filesystem* filesystem,
+				const char* filename);
 	void* arguments;
 };
 
@@ -42,8 +45,10 @@ struct inode* fs_allocate_inode();
 
 void fs_free_inode(struct inode* inode);
 
-int fs_inode_read(struct inode* inode, const char* ptr);
-
 int fs_inode_close(struct inode* inode);
+
+int fs_inode_get(struct inode* inode, char* ptr);
+
+int fs_inode_put(struct inode* inode, char c);
 
 #endif

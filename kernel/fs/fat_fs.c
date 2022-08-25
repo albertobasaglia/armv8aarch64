@@ -1,10 +1,10 @@
-#include "block.h"
-#include "uart.h"
+#include <block.h>
 #include <fs/fat.h>
 #include <fs/fat_fs.h>
 #include <fs/fs.h>
 #include <stdint.h>
 #include <sysutils.h>
+#include <uart.h>
 
 struct filesystem* fatfs_createfs(struct block* block)
 {
@@ -54,11 +54,11 @@ struct inode* fatfs_open(struct filesystem* filesystem, const char* filename)
 	fat_inode->fat_handle = fat_handle;
 	fat_inode->fat16_dir_entry = entry;
 
-	/*
-	 * Set up the vtable
-	 * */
-	inode->vtable.read = fatfs_read;
 	inode->vtable.close = fatfs_close;
+
+	// TODO implement (using a buffer!)
+	inode->vtable.get = NULL;
+	inode->vtable.put = NULL;
 
 	return inode;
 }
@@ -67,6 +67,17 @@ int fatfs_read(struct inode* inode, void* ptr)
 {
 	struct fat_inode* fat_inode = (struct fat_inode*)inode->impl_inode;
 	fat_read_entry(fat_inode->fat_handle, fat_inode->fat16_dir_entry, ptr);
+	return 0;
+}
+
+int fatfs_get(struct inode* inode, char* ptr)
+{
+	struct fat_inode* fat_inode = (struct fat_inode*)inode->impl_inode;
+	/*
+	 * TODO
+	 *
+	 * create an index to the current position in the file
+	 * */
 	return 0;
 }
 

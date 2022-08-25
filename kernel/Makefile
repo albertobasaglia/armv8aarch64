@@ -25,7 +25,8 @@ BUILD_OBJS = timer/timer.o \
 	     mp/sched.o \
 	     mp/job.o \
 	     fs/fat_fs.o \
-	     fs/fs.o
+	     fs/fs.o \
+	     fs/ram_fs.o
 
 all: kernel.elf
 

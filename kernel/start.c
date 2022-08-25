@@ -1,5 +1,6 @@
 #include "fs/fat_fs.h"
 #include "fs/fs.h"
+#include "fs/ram_fs.h"
 #include <block.h>
 #include <elf/elf.h>
 #include <elf/filebuffer.h>
@@ -81,13 +82,6 @@ void testfs()
 	struct filesystem* fs = fatfs_createfs(&disk_block);
 	struct inode* inode = fs->open(fs, "init.elf");
 
-	char buffer[50000];
-
-	fs_inode_read(inode, buffer);
-
-	for (int i = 0; i < 50; i++)
-		put_char(buffer[i]);
-
 	fs_inode_close(inode);
 	fatfs_deletefs(fs);
 }
@@ -143,6 +137,30 @@ void usermode()
 	sysutils_jump_eret_usermode(init_job);
 }
 
+void testramfs()
+{
+	fs_init_slab();
+	struct filesystem* ramfs = ramfs_createfs();
+
+	struct inode* inode = ramfs->create(ramfs, "pizza");
+	fs_inode_put(inode, 'p');
+	fs_inode_put(inode, 'i');
+	fs_inode_put(inode, 'z');
+	fs_inode_put(inode, 'z');
+	fs_inode_put(inode, 'a');
+	fs_inode_close(inode);
+
+	inode = ramfs->open(ramfs, "pizza");
+	char out;
+	while (fs_inode_get(inode, &out)) {
+		put_char(out);
+	}
+
+	fs_inode_close(inode);
+
+	ramfs_deletefs(ramfs);
+}
+
 void debug_paging()
 {
 	paging_manager_map_page(&paging_kernel, 0x100000000, 0x40000000, 0, 0);
@@ -181,5 +199,6 @@ void start()
 
 	/* debug_paging(); */
 	/* usermode(); */
-	testfs();
+	/* testfs(); */
+	testramfs();
 }
