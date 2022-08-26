@@ -1,10 +1,37 @@
-Some tests on ARMv8 AArch64
+Tiny ARMv8 aarch64 kernel.
+==========================
 
-TODO:
-- integer print (DONE)
-- float print (how?)
-- better kernel log (with time) (DONE)
-- kernel memory manager
-- paging
-- elf loading
-- usermode
+DISCLAMER: This is a project with educational purposes. I'm passionate about
+kernel development and after reading Silberschatz's book I felt the need to
+try to implement some stuff on my own.
+
+----
+
+What I have implemented so far
+------------------------------
+
+ * A simple *generic interrupt controller* driver, allowing the cpu to receive
+ interrupts from the connected devices. This was implemented very early since
+ it is required to preempt usercode to switch the context.
+
+ * A very basic *virtual memory* manager. What I don't like about this is the
+ fact that it is highly coupled with the ARMv8 architecture. I opted for this
+ solution because it was easier to implement and I don't intend to support
+ other architectures.
+
+ * A *slab* allocator.
+
+ * A *heap* allocator.
+
+ * A *VIRTIO* block device driver (only allowing sync operations at the current
+ state).
+
+ * A *FAT16* driver (at the moment with limited functionalities).
+
+ * An *ELF* file parser. I use this to load the program section of the *init*
+ process (which is the first process in usermode).
+
+ * A *ramfs*
+
+ There is still a loooong way to go, but I'm learning *how to do* (after
+ discovering *how not to do*) stuff.

@@ -1,3 +1,4 @@
+#include "log.h"
 #include <heap.h>
 
 #include <stdbool.h>
@@ -23,6 +24,8 @@ struct heap heap_createtable(char* heap_start_address,
 
 void* heap_alloc(struct heap* heap, size_t size)
 {
+	if (size == 0)
+		return NULL;
 	// How many blocks we will need
 	heap_table_t block = heap->heap;
 	size_t alloc_blocks = size / HEAP_BLOCK_SIZE_BYTES;
@@ -88,12 +91,14 @@ void heap_free(struct heap* heap, void* ptr)
 	// We need to be given a "first" block to free memory
 	if (!(*start & HEAP_BLOCK_FIRST))
 		return;
-	heap->free_blocks += mark_region_free(start);
+	int freed_blocks = mark_region_free(start);
+	/* klogf("Freed %q blocks", freed_blocks); */
+	heap->free_blocks += freed_blocks;
 }
 
 size_t mark_region_free(heap_table_t from)
 {
-	size_t freed = 0;
+	size_t freed = 1;
 	while (!(*from & HEAP_BLOCK_LAST)) {
 		*from = 0;
 		from++;

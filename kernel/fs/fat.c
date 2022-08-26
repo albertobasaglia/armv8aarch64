@@ -1,7 +1,8 @@
+#include "math.h"
 #include <block.h>
+#include <fs/fat.h>
 #include <log.h>
 #include <sysutils.h>
-#include <fs/fat.h>
 
 #include <stdint.h>
 #include <string.h>
@@ -173,11 +174,12 @@ void fat_read_entry(struct fat_handle* handle,
 		    struct fat16_dir_entry* entry,
 		    void* ptr)
 {
-	size_t cluster_size = handle->header.bytes_per_sector *
-			      handle->header.sectors_per_cluster;
+	size_t cluster_size = fat_get_cluster_size(handle);
+
 	int bytes_left = entry->filesize_bytes;
 	int bytes_processed = 0;
 	int cluster = entry->starting_cluster;
+
 	while (cluster != 0xffff) {
 		fat_read_cluster(handle, cluster,
 				 bytes_left > cluster_size ? cluster_size
@@ -187,6 +189,78 @@ void fat_read_entry(struct fat_handle* handle,
 		bytes_left -= cluster_size;
 		bytes_processed += cluster_size;
 	}
+}
+
+void fat_read_entry_offset_size(struct fat_handle* handle,
+				struct fat16_dir_entry* entry,
+				void* ptr,
+				int offset,
+				int size)
+{
+	size_t cluster_size = fat_get_cluster_size(handle);
+
+	char* buffer = kalloc(cluster_size);
+
+	int clusters_read = size / cluster_size +
+			    ((size % cluster_size == 0) ? 0 : 1) +
+			    ((offset % cluster_size == 0) ? 0 : 1);
+
+	int first_cluster_index = offset / cluster_size;
+	int first_cluster_offset = offset % cluster_size;
+
+	int cluster = entry->starting_cluster;
+	for (int i = 0; i < first_cluster_index; i++) {
+		cluster = handle->fat[cluster];
+	}
+
+	int out_index = 0;
+	int remaining_bytes = size;
+
+	// Read the first sector
+
+	int first_read_size = min(size, cluster_size - first_cluster_offset);
+
+	fat_read_cluster(handle, cluster, cluster_size, buffer);
+	memcpy(ptr + out_index, buffer + first_cluster_offset, first_read_size);
+	remaining_bytes -= first_read_size;
+	out_index += first_read_size;
+
+	cluster = handle->fat[cluster];
+
+	while (remaining_bytes > cluster_size) {
+		fat_read_cluster(handle, cluster, cluster_size, buffer);
+		memcpy(buffer + out_index, buffer, cluster_size);
+		remaining_bytes -= cluster_size;
+		out_index += cluster_size;
+		cluster = handle->fat[cluster];
+	}
+
+	if (remaining_bytes > 0) {
+		fat_read_cluster(handle, cluster, remaining_bytes, buffer);
+		memcpy(buffer + out_index, buffer, remaining_bytes);
+	}
+
+	kfree(buffer);
+}
+
+void fat_read_entry_cluster_offset(struct fat_handle* handle,
+				   struct fat16_dir_entry* entry,
+				   void* ptr,
+				   int cluster_offset)
+{
+	size_t cluster_size = fat_get_cluster_size(handle);
+
+	int cluster_index = 0;
+	int cluster = entry->starting_cluster;
+	while (cluster != 0xffff && cluster_index < cluster_offset) {
+		cluster = handle->fat[cluster];
+		cluster_index++;
+	}
+	if (cluster == 0xffff) {
+		// failed, not enought clusters
+		return;
+	}
+	fat_read_cluster(handle, cluster, cluster_size, ptr);
 }
 
 struct fat16_dir_entry* fat_get_entry_by_file(struct fat_handle* handle,
@@ -206,4 +280,10 @@ struct fat16_dir_entry* fat_get_entry_by_file(struct fat_handle* handle,
 		}
 	}
 	return NULL;
+}
+
+int fat_get_cluster_size(struct fat_handle* handle)
+{
+	return handle->header.bytes_per_sector *
+	       handle->header.sectors_per_cluster;
 }

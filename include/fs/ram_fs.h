@@ -3,7 +3,7 @@
 
 #include <fs/fs.h>
 
-#define RAMFILE_MAXNAME 30
+#define RAMFILE_MAXNAME   30
 #define RAMFILE_STARTSIZE 4096
 
 struct ram_file {

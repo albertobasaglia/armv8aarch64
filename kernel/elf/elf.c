@@ -1,8 +1,9 @@
-#include <sysutils.h>
+#include "log.h"
 #include <elf/elf.h>
 #include <elf/filebuffer.h>
 #include <stddef.h>
 #include <string.h>
+#include <sysutils.h>
 
 ELF elf_fromfilebuffer(struct filebuffer file)
 {

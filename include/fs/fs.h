@@ -1,7 +1,7 @@
 #ifndef FS_FS_H
 #define FS_FS_H
 
-#define FS_INODE_MAX 1024
+#define FS_INODE_MAX 32
 
 #include <stddef.h>
 #include <stdint.h>
@@ -23,6 +23,13 @@ struct inode_vtable {
 	 * This should close the file (and free the impl_inode memory)
 	 * */
 	int (*close)(struct inode* impl_inode);
+
+	/*
+	 * Depends on the implementation.
+	 * Returns total bytes left to read if possible.
+	 * Elsewhere 0 if "buffer" is empty, 1 if chars available.
+	 * */
+	int (*left)(struct inode* impl_inode);
 };
 
 struct inode {
@@ -50,5 +57,7 @@ int fs_inode_close(struct inode* inode);
 int fs_inode_get(struct inode* inode, char* ptr);
 
 int fs_inode_put(struct inode* inode, char c);
+
+int fs_inode_left(struct inode* inode);
 
 #endif

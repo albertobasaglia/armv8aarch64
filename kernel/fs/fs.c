@@ -1,4 +1,5 @@
 #include <fs/fs.h>
+#include <log.h>
 #include <slab.h>
 #include <sysutils.h>
 
@@ -36,4 +37,9 @@ int fs_inode_put(struct inode* inode, char c)
 int fs_inode_close(struct inode* inode)
 {
 	return inode->vtable.close(inode);
+}
+
+int fs_inode_left(struct inode* inode)
+{
+	return inode->vtable.left(inode);
 }

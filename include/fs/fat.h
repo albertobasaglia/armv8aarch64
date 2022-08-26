@@ -58,7 +58,7 @@ struct fat_handle {
 void print_dir_entry(struct fat16_dir_entry* entry);
 
 /*
- * Abstraction utility function to read data from disk.
+ * Abstraction utility function to read data from the block device.
  * */
 void fat_load_data(struct fat_handle* handle,
 		   void* ptr,
@@ -136,5 +136,27 @@ void fat_get_fat_extension(char* dest, const char* src);
 struct fat16_dir_entry* fat_get_entry_by_file(struct fat_handle* handle,
 					      const char* name,
 					      const char* ext);
+
+/*
+ * Reads the n-th cluster from the entry.
+ * ptr - where to put data.
+ * cluster_offset - offset of the first cluster to be read.
+ * */
+void fat_read_entry_cluster_offset(struct fat_handle* handle,
+				   struct fat16_dir_entry* entry,
+				   void* ptr,
+				   int cluster_offset);
+
+/*
+ * Read data from a file (fat16_dir_entry) given an offset
+ * and a size indicating how many bytes to read.
+ * */
+void fat_read_entry_offset_size(struct fat_handle* handle,
+				struct fat16_dir_entry* entry,
+				void* ptr,
+				int offset,
+				int size);
+
+int fat_get_cluster_size(struct fat_handle* handle);
 
 #endif

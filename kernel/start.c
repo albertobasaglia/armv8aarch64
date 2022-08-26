@@ -1,10 +1,10 @@
-#include "fs/fat_fs.h"
-#include "fs/fs.h"
-#include "fs/ram_fs.h"
 #include <block.h>
 #include <elf/elf.h>
 #include <elf/filebuffer.h>
 #include <fs/fat.h>
+#include <fs/fat_fs.h>
+#include <fs/fs.h>
+#include <fs/ram_fs.h>
 #include <mp/job.h>
 #include <mp/sched.h>
 #include <paging.h>
@@ -52,7 +52,7 @@ void enable_gic()
 
 void setup_heap()
 {
-	int heap_size_blocks = 0x1000; // 16MB
+	int heap_size_blocks = 0x8000; // 128MB
 	size_t table_address = (size_t)&HEAP_START;
 	size_t heap_address = table_address + heap_table_size(heap_size_blocks);
 	sysutils_kernel_heap_create(table_address, heap_address,
@@ -69,7 +69,6 @@ void enable_paging_test()
 
 void testfs()
 {
-	fs_init_slab();
 	// Read the elf file from the disk
 	struct virtioblk disk;
 	if (disk_init(&disk, 31) == 0) {
@@ -81,6 +80,8 @@ void testfs()
 	struct block disk_block = disk_register_block_device(&disk);
 	struct filesystem* fs = fatfs_createfs(&disk_block);
 	struct inode* inode = fs->open(fs, "init.elf");
+
+	klogf("Left is %q", fs_inode_left(inode));
 
 	fs_inode_close(inode);
 	fatfs_deletefs(fs);
@@ -95,18 +96,16 @@ void usermode()
 	} else {
 		klog("Disk init error!");
 	}
-
 	struct block disk_block = disk_register_block_device(&disk);
+	struct filesystem* fs = fatfs_createfs(&disk_block);
+	struct inode* inode = fs->open(fs, "init.elf");
+	int file_size = fs_inode_left(inode);
+	char* init_mem = kalloc(file_size);
+	char* ptr = init_mem;
+	while (fs_inode_get(inode, ptr))
+		ptr++;
 
-	struct fat_handle fat = fat_load(&disk_block);
-	/* fat_debug_info(&fat); */
-
-	struct fat16_dir_entry* entry = fat_get_entry_by_file(&fat, "init",
-							      "elf");
-	/* klogf("INIT.ELF filesize is %q", entry->filesize_bytes); */
-
-	char* init_mem = kalloc(entry->filesize_bytes);
-	fat_read_entry(&fat, entry, init_mem);
+	fs_inode_close(inode);
 
 	struct filebuffer fb = filebuffer_frombuffer(init_mem);
 
@@ -114,9 +113,9 @@ void usermode()
 	elf_alloc_and_parse(&elf);
 
 	int ph_count = elf_get_programheader_count(&elf);
-	/* klogf("Program header count is %q", ph_count); */
+	klogf("Program header count is %q", ph_count);
 	ElfN_Phdr* program_header = elf_get_programheader_byid(&elf, 0);
-	/* klogf("Program header 0 size is %q", program_header->p_filesz); */
+	klogf("Program header 0 size is %q", program_header->p_filesz);
 
 	// Create the job
 	struct paging_manager pm;
@@ -134,12 +133,12 @@ void usermode()
 	struct job* init_job = job_init_and_create(elf.header.e_entry,
 						   0x80001000, "init", &pm);
 	scheduling_register_routine();
+	sysutils_log_free_heap();
 	sysutils_jump_eret_usermode(init_job);
 }
 
 void testramfs()
 {
-	fs_init_slab();
 	struct filesystem* ramfs = ramfs_createfs();
 
 	struct inode* inode = ramfs->create(ramfs, "pizza");
@@ -176,6 +175,7 @@ void start()
 {
 	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
 	setup_heap();
+	fs_init_slab();
 
 	void* slab_memory = kalloc(
 	    slab_get_needed_size(sizeof(union page_table_store), 128));
@@ -197,8 +197,9 @@ void start()
 
 	enable_paging_test();
 
-	/* debug_paging(); */
-	/* usermode(); */
+	usermode();
 	/* testfs(); */
-	testramfs();
+	/* debug_paging(); */
+	/* testfs(); */
+	/* testramfs(); */
 }
