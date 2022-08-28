@@ -1,11 +1,13 @@
 #ifndef MP_JOB_H
 #define MP_JOB_H
 
+#include "fs/fs.h"
 #include <paging.h>
 #include <stdint.h>
 
 #define MAX_NAME_CHAR 30
 #define MAX_JOBS      256
+#define JOB_MAX_FILES 8
 
 struct job {
 	char name[MAX_NAME_CHAR];
@@ -15,6 +17,8 @@ struct job {
 	uint64_t sp;
 
 	struct paging_manager* paging;
+	struct inode* open_files[JOB_MAX_FILES];
+	int open_files_count;
 
 	struct job* next;
 };
@@ -46,5 +50,7 @@ struct job* job_get_current();
  * Goes forward in the jobs chain.
  * */
 void job_forward();
+
+int job_add_file(struct job* job, struct inode* inode);
 
 #endif

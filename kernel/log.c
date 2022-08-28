@@ -56,11 +56,9 @@ int sprintf_internal(char* str, const char* format, va_list vars)
 			}
 			case 's': {
 				const char* strarg = va_arg(vars, char*);
-				klog(strarg);
 				strcat(str, strarg);
 				format += 2;
 				int inserted = strlen(strarg);
-				klogf("Inserted %q chars", inserted);
 				str += inserted;
 				break;
 			}

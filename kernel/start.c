@@ -98,6 +98,7 @@ void usermode()
 	}
 	struct block disk_block = disk_register_block_device(&disk);
 	struct filesystem* fs = fatfs_createfs(&disk_block);
+	fs_filesystem_setmain(fs);
 	struct inode* inode = fs->open(fs, "init.elf");
 	int file_size = fs_inode_left(inode);
 	char* init_mem = kalloc(file_size);

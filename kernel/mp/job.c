@@ -22,21 +22,13 @@ struct job* job_init_and_create(uint64_t entry,
 {
 
 	job_init_slab(MAX_JOBS);
-	struct job* job = slab_allocate(&job_slab);
+
+	struct job* job = job_create(entry, sp, name, paging);
 
 	current_job = job;
 
-	job->pc = entry;
-	job->sp = sp;
-	job->paging = paging;
 	job->next = job; // since this will form a chain, being the only element
 			 // in it means being the next yourself :)
-
-	strncpy(job->name, name, MAX_NAME_CHAR);
-
-	for (int i = 0; i < 31; i++)
-		job->x[i] = 0;
-
 	return job;
 }
 
@@ -61,6 +53,10 @@ struct job* job_create(uint64_t entry,
 	for (int i = 0; i < 31; i++)
 		job->x[i] = 0;
 
+	for (int i = 0; i < JOB_MAX_FILES; i++)
+		job->open_files[i] = NULL;
+	job->open_files_count = 0;
+
 	return job;
 }
 
@@ -79,4 +75,18 @@ struct job* job_get_current()
 void job_forward()
 {
 	current_job = current_job->next;
+}
+
+int job_add_file(struct job* job, struct inode* inode)
+{
+	if (job->open_files_count >= JOB_MAX_FILES)
+		return -1;
+
+	int fd = 0;
+	while (job->open_files[fd] != NULL)
+		fd++;
+
+	job->open_files[fd] = inode;
+
+	return fd;
 }

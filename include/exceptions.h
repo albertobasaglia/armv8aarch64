@@ -34,6 +34,6 @@ uint64_t exceptions_getesr();
  * */
 void exceptions_handle_fiq(uint64_t* x30);
 
-bool exceptions_handle_syscall(uint16_t imm);
+bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30);
 
 #endif

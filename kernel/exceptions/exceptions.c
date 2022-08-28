@@ -1,3 +1,4 @@
+#include "fs/fs.h"
 #include <gic.h>
 #include <log.h>
 #include <mp/job.h>
@@ -9,16 +10,38 @@
 #include <stddef.h>
 #include <stdint.h>
 
-bool exceptions_handle_syscall(uint16_t imm)
+#define REG(x) x30[30 - x]
+
+/*
+ * TODO
+ * This should be moved to the syscall table.
+ * */
+void exceptions_internal_open(uint64_t* x30)
+{
+	struct filesystem* fs = fs_filesystem_getmain();
+	struct inode* inode = fs->open(fs, (char*)REG(0));
+	struct job* job = job_get_current();
+
+	int fd = job_add_file(job, inode);
+	REG(0) = fd;
+}
+
+bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30)
 {
 	if (imm == 10) {
 		// syscall exit: hang
 		klog("HANG");
 		while (1)
 			;
+	} else if (imm == 11) {
+		klogf("'%s': '%s'", job_get_current()->name, REG(0));
+		return 1;
 	} else if (imm == 17) {
 		klog("Ping syscall from process:");
 		klog(job_get_current()->name);
+		return 1;
+	} else if (imm == 20) {
+		exceptions_internal_open(x30);
 		return 1;
 	}
 	return 0;
@@ -42,7 +65,7 @@ void exceptions_distributor(uint64_t* x30)
 	} else if (ec == ESR_EC_SVC64) {
 		uint16_t imm16 = esr & ESR_ISS_SVC_IMM16;
 		/* klogf("Requested system call imm16: %q", imm16); */
-		bool res = exceptions_handle_syscall(imm16);
+		bool res = exceptions_handle_syscall(imm16, x30);
 		if (!res) {
 			klogf("Unhandled syscall!");
 		}

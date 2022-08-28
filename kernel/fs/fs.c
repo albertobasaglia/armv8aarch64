@@ -4,6 +4,7 @@
 #include <sysutils.h>
 
 static struct slab inode_slab;
+static struct filesystem* main_filesystem = NULL;
 
 void fs_init_slab()
 {
@@ -42,4 +43,14 @@ int fs_inode_close(struct inode* inode)
 int fs_inode_left(struct inode* inode)
 {
 	return inode->vtable.left(inode);
+}
+
+void fs_filesystem_setmain(struct filesystem* filesystem)
+{
+	main_filesystem = filesystem;
+}
+
+struct filesystem* fs_filesystem_getmain()
+{
+	return main_filesystem;
 }

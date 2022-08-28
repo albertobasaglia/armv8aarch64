@@ -60,4 +60,8 @@ int fs_inode_put(struct inode* inode, char c);
 
 int fs_inode_left(struct inode* inode);
 
+void fs_filesystem_setmain(struct filesystem* filesystem);
+
+struct filesystem* fs_filesystem_getmain();
+
 #endif
