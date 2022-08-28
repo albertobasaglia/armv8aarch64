@@ -31,8 +31,8 @@ void klogf(const char* format, ...)
 
 int sprintf_internal(char* str, const char* format, va_list vars)
 {
-	char buffer[50];
-	memset(buffer, 0, 50);
+	char buffer[100];
+	memset(buffer, 0, 100);
 	size_t inserted = 0;
 	while (*format != 0) {
 		if (*format == '%') {
@@ -51,6 +51,16 @@ int sprintf_internal(char* str, const char* format, va_list vars)
 				int inserted = strlen(buffer);
 				strcat(str, buffer);
 				format += 2;
+				str += inserted;
+				break;
+			}
+			case 's': {
+				const char* strarg = va_arg(vars, char*);
+				klog(strarg);
+				strcat(str, strarg);
+				format += 2;
+				int inserted = strlen(strarg);
+				klogf("Inserted %q chars", inserted);
 				str += inserted;
 				break;
 			}
