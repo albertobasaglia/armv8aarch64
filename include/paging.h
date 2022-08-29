@@ -11,6 +11,8 @@
 
 #include <slab.h>
 
+#define PAGING_MAX_TABLES              0x1000
+
 #define PAGING_L012_VALID              (1 << 0)
 #define PAGING_L012_TABLE              (1 << 1)
 
@@ -145,5 +147,10 @@ int paging_insert_or_alloc(struct paging_manager* paging_manager,
 			   uint64_t pa,
 			   bool unprivileged_access,
 			   bool read_only);
+
+void paging_init_slab();
+
+struct slab* paging_get_slab();
+
 
 #endif

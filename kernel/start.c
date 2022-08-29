@@ -25,7 +25,6 @@ extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
 extern char HEAP_START;
 
-static struct slab paging_slab;
 static struct paging_manager paging_kernel;
 
 void handle_timer_int(int id, void* arg)
@@ -61,7 +60,7 @@ void setup_heap()
 
 void enable_paging_test()
 {
-	paging_manager_init(&paging_kernel, &paging_slab);
+	paging_manager_init(&paging_kernel, paging_get_slab());
 	paging_manager_map_kernel(&paging_kernel);
 	paging_manager_apply(&paging_kernel);
 	klog("Paging enabled");
@@ -122,7 +121,7 @@ void usermode()
 
 	// Create the job
 	struct paging_manager pm;
-	paging_manager_init(&pm, &paging_slab);
+	paging_manager_init(&pm, paging_get_slab());
 	paging_manager_map_kernel(
 	    &pm); // every userprocess has the kernel mapped in!
 	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
@@ -176,22 +175,15 @@ void debug_paging()
 
 void start()
 {
+	klog("Kernel started");
 	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
 	setup_heap();
 	fs_init_slab();
-
-	void* slab_memory = kalloc(
-	    slab_get_needed_size(sizeof(union page_table_store), 128));
-
-	klogf("Slab memory allocated at 0x%x", slab_memory);
-
-	paging_slab = slab_create(sizeof(union page_table_store), 128,
-				  slab_memory);
+	paging_init_slab();
 
 	sysutils_mask_fiq(false);
 	sysutils_mask_irq(false);
 
-	klog("Kernel started");
 	enable_gic();
 	klog("GIC enabled");
 

@@ -1,8 +1,11 @@
+#include "sysutils.h"
 #include <log.h>
 #include <paging.h>
 #include <slab.h>
 #include <stdbool.h>
 #include <stdint.h>
+
+struct slab slab;
 
 uint64_t paging_l012_create_entry_block(uint64_t block_address,
 					int level,
@@ -271,4 +274,18 @@ int paging_insert_or_alloc(struct paging_manager* paging_manager,
 	page_table_store->block[l3_offset] = new_value;
 
 	return 0;
+}
+
+void paging_init_slab()
+{
+	void* slab_memory = kalloc(slab_get_needed_size(
+	    sizeof(union page_table_store), PAGING_MAX_TABLES));
+
+	slab = slab_create(sizeof(union page_table_store), PAGING_MAX_TABLES,
+			   slab_memory);
+}
+
+struct slab* paging_get_slab()
+{
+	return &slab;
 }
