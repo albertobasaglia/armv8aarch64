@@ -87,6 +87,15 @@ int job_add_file(struct job* job, struct inode* inode)
 		fd++;
 
 	job->open_files[fd] = inode;
+	job->open_files_count++;
 
 	return fd;
+}
+
+struct inode* job_get_file(struct job* job, int fd)
+{
+	if (fd < 0 || fd >= job->open_files_count)
+		return NULL;
+
+	return job->open_files[fd];
 }

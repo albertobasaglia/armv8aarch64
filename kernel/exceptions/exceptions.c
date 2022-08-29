@@ -1,4 +1,5 @@
 #include "fs/fs.h"
+#include "sysutils.h"
 #include <gic.h>
 #include <log.h>
 #include <mp/job.h>
@@ -20,14 +21,44 @@ void exceptions_internal_open(uint64_t* x30)
 {
 	struct filesystem* fs = fs_filesystem_getmain();
 	struct inode* inode = fs->open(fs, (char*)REG(0));
+
 	struct job* job = job_get_current();
 
 	int fd = job_add_file(job, inode);
 	REG(0) = fd;
 }
 
+void exceptions_internal_get(uint64_t* x30)
+{
+	struct filesystem* fs = fs_filesystem_getmain();
+	struct job* job = job_get_current();
+
+	int fd = REG(0);
+
+	struct inode* inode = job_get_file(job, fd);
+
+	if (inode == NULL)
+		goto err;
+
+	char c;
+	fs_inode_get(inode, &c);
+
+	REG(0) = c;
+
+	return;
+err:
+	REG(0) = -1;
+}
+
 bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30)
 {
+	int res;
+	uint64_t lr, spsr;
+	asm volatile("mrs %0, ELR_EL1\n"
+		     "mrs %1, SPSR_EL1"
+		     : "=r"(lr), "=r"(spsr));
+
+	sysutils_mask_fiq(false);
 	if (imm == 10) {
 		// syscall exit: hang
 		klog("HANG");
@@ -35,16 +66,22 @@ bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30)
 			;
 	} else if (imm == 11) {
 		klogf("'%s': '%s'", job_get_current()->name, REG(0));
-		return 1;
-	} else if (imm == 17) {
-		klog("Ping syscall from process:");
-		klog(job_get_current()->name);
-		return 1;
+		res = 1;
+		goto exit;
 	} else if (imm == 20) {
 		exceptions_internal_open(x30);
-		return 1;
+		res = 1;
+		goto exit;
+	} else if (imm == 21) {
+		exceptions_internal_get(x30);
+		res = 1;
+		goto exit;
 	}
-	return 0;
+exit:
+	asm volatile("msr ELR_EL1, %0\n"
+		     "msr SPSR_EL1, %1" ::"r"(lr),
+		     "r"(spsr));
+	return res;
 }
 
 void exceptions_distributor(uint64_t* x30)
@@ -67,10 +104,10 @@ void exceptions_distributor(uint64_t* x30)
 		/* klogf("Requested system call imm16: %q", imm16); */
 		bool res = exceptions_handle_syscall(imm16, x30);
 		if (!res) {
-			klogf("Unhandled syscall!");
+			klogf("Unhandled syscall (imm=%q)", imm16);
 		}
 	} else {
-		klog("Unhandled exception!");
+		klogf("Unhandled exception (esr=0x%x)", esr);
 		while (1)
 			;
 	}

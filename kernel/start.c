@@ -87,6 +87,8 @@ void testfs()
 	fatfs_deletefs(fs);
 }
 
+struct block disk_block;
+
 void usermode()
 {
 	// Read the elf file from the disk
@@ -96,7 +98,7 @@ void usermode()
 	} else {
 		klog("Disk init error!");
 	}
-	struct block disk_block = disk_register_block_device(&disk);
+	disk_block = disk_register_block_device(&disk);
 	struct filesystem* fs = fatfs_createfs(&disk_block);
 	fs_filesystem_setmain(fs);
 	struct inode* inode = fs->open(fs, "init.elf");

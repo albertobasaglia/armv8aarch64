@@ -1,4 +1,4 @@
-CC = aarch64-none-elf-gcc
+CC = aarch64-none-elf-gcc -ggdb
 LD = aarch64-none-elf-ld
 AS = aarch64-none-elf-as
 

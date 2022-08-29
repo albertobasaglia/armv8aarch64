@@ -10,9 +10,17 @@ int sys_open(char* filename)
 	return fd;
 }
 
-void sys_ping()
+char sys_read(int fd)
 {
-	asm volatile("svc 17");
+	char c;
+	asm volatile("mov w0, %w1\n"
+		     "svc 21\n"
+		     "mov %w0, w0"
+		     : "=r"(c)
+		     : "r"(fd)
+		     : "w0");
+
+	return c;
 }
 
 void sys_log(char* message)
@@ -26,7 +34,16 @@ int main()
 {
 	char* test = "hello.elf";
 	int fd = sys_open(test);
-	sys_log("Ciuao!");
+	sys_log("reading 10 from hello.elf");
+
+	char* str = "?";
+
+	for (int i = 0; i < 10; i++) {
+		str[0] = sys_read(fd);
+		sys_log(str);
+	}
+
+	sys_log("starting to idle");
 
 	while (1)
 		;

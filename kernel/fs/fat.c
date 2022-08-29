@@ -197,6 +197,10 @@ void fat_read_entry_offset_size(struct fat_handle* handle,
 				int offset,
 				int size)
 {
+	/* klogf("offset: %q, size: %q", offset, size); */
+	/*
+	 * TODO debug!
+	 * */
 	size_t cluster_size = fat_get_cluster_size(handle);
 
 	char* buffer = kalloc(cluster_size);

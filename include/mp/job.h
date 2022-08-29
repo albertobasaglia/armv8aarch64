@@ -53,4 +53,6 @@ void job_forward();
 
 int job_add_file(struct job* job, struct inode* inode);
 
+struct inode* job_get_file(struct job* job, int fd);
+
 #endif

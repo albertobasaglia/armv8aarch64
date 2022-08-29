@@ -12,5 +12,6 @@ qemu-system-aarch64 -machine virt,highmem=on,gic-version=3 \
                     -drive file=hdd,if=none,format=raw,id=hd \
                     -nographic \
                     -d int &
+                    # -d int,trace:virtio* &
 sleep 5
 kill -9 $!

@@ -78,6 +78,7 @@ int fatfs_read(struct inode* inode, void* ptr)
 
 int fatfs_get(struct inode* inode, char* ptr)
 {
+
 	struct fat_inode* fat_inode = (struct fat_inode*)inode->impl_inode;
 	struct fat_handle* fat_handle = fat_inode->fat_handle;
 
