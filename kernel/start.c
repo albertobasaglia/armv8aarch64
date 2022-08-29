@@ -25,14 +25,6 @@ extern char USERSTACK_END;
 extern char EXCEPTION_TABLE;
 extern char HEAP_START;
 
-static struct paging_manager paging_kernel;
-
-void handle_timer_int(int id, void* arg)
-{
-	klog("Ack TIMER");
-	timer_write_tval(timer_getfrequency());
-}
-
 void enable_gic()
 {
 	gic_distributor_enable();
@@ -46,7 +38,6 @@ void enable_gic()
 	gic_distributor_set_target(79, 1);
 	gic_distributor_enable_id(79);
 	gic_distributor_set_group(79, 0);
-	gic_redistributor_set_handler(30, handle_timer_int, NULL);
 }
 
 void setup_heap()
@@ -60,30 +51,10 @@ void setup_heap()
 
 void enable_paging_test()
 {
-	paging_manager_init(&paging_kernel, paging_get_slab());
-	paging_manager_map_kernel(&paging_kernel);
-	paging_manager_apply(&paging_kernel);
+	paging_manager_init(sysutils_get_paging_kernel(), paging_get_slab());
+	paging_manager_map_kernel(sysutils_get_paging_kernel());
+	paging_manager_apply(sysutils_get_paging_kernel());
 	klog("Paging enabled");
-}
-
-void testfs()
-{
-	// Read the elf file from the disk
-	struct virtioblk disk;
-	if (disk_init(&disk, 31) == 0) {
-		klog("Disk init is successful");
-	} else {
-		klog("Disk init error!");
-	}
-
-	struct block disk_block = disk_register_block_device(&disk);
-	struct filesystem* fs = fatfs_createfs(&disk_block);
-	struct inode* inode = fs->open(fs, "init.elf");
-
-	klogf("Left is %q", fs_inode_left(inode));
-
-	fs_inode_close(inode);
-	fatfs_deletefs(fs);
 }
 
 struct block disk_block;
@@ -98,75 +69,17 @@ void usermode()
 		klog("Disk init error!");
 	}
 	disk_block = disk_register_block_device(&disk);
+
 	struct filesystem* fs = fatfs_createfs(&disk_block);
 	fs_filesystem_setmain(fs);
+
 	struct inode* inode = fs->open(fs, "init.elf");
-	int file_size = fs_inode_left(inode);
-	char* init_mem = kalloc(file_size);
-	char* ptr = init_mem;
-	while (fs_inode_get(inode, ptr))
-		ptr++;
 
-	fs_inode_close(inode);
+	job_create_from_file(inode, "init");
 
-	struct filebuffer fb = filebuffer_frombuffer(init_mem);
-
-	ELF elf = elf_fromfilebuffer(fb);
-	elf_alloc_and_parse(&elf);
-
-	int ph_count = elf_get_programheader_count(&elf);
-	klogf("Program header count is %q", ph_count);
-	ElfN_Phdr* program_header = elf_get_programheader_byid(&elf, 0);
-	klogf("Program header 0 size is %q", program_header->p_filesz);
-
-	// Create the job
-
-	paging_manager_map_1gb(&paging_kernel, 0x80000000, 0x80000000, 0, 0);
-	elf_dump_program_content(&elf, program_header, (void*)0x80000000);
-	elf_free(&elf);
-
-	klogf("Jumping to 0x%x (entry point)", elf.header.e_entry);
-	struct paging_manager* pm = job_create_paging();
-
-	struct job* init_job = job_init_and_create(elf.header.e_entry,
-						   0x80001000, "init", pm);
 	scheduling_register_routine();
 	sysutils_log_free_heap();
-	sysutils_jump_eret_usermode(init_job);
-}
-
-void testramfs()
-{
-	struct filesystem* ramfs = ramfs_createfs();
-
-	struct inode* inode = ramfs->create(ramfs, "pizza");
-	fs_inode_put(inode, 'p');
-	fs_inode_put(inode, 'i');
-	fs_inode_put(inode, 'z');
-	fs_inode_put(inode, 'z');
-	fs_inode_put(inode, 'a');
-	fs_inode_close(inode);
-
-	inode = ramfs->open(ramfs, "pizza");
-	char out;
-	while (fs_inode_get(inode, &out)) {
-		put_char(out);
-	}
-
-	fs_inode_close(inode);
-
-	ramfs_deletefs(ramfs);
-}
-
-void debug_paging()
-{
-	paging_manager_map_page(&paging_kernel, 0x100000000, 0x40000000, 0, 0);
-	paging_manager_map_page(&paging_kernel, 0x100001000, 0x40000000, 0, 0);
-	char* a = (char*)0x100001005;
-	char* b = (char*)0x40000005;
-	*a = 'a';
-	put_char(*b);
-	put_char('\n');
+	sysutils_jump_eret_usermode(job_get_current());
 }
 
 void start()

@@ -1,3 +1,5 @@
+#include "elf/elf.h"
+#include "elf/filebuffer.h"
 #include "log.h"
 #include "paging.h"
 #include <mp/job.h>
@@ -17,23 +19,6 @@ static struct slab job_slab;
  * */
 static struct job* current_job;
 
-struct job* job_init_and_create(uint64_t entry,
-				uint64_t sp,
-				const char* name,
-				struct paging_manager* paging)
-{
-
-	job_init_slab(MAX_JOBS);
-
-	struct job* job = job_create(entry, sp, name, paging);
-
-	current_job = job;
-
-	job->next = job; // since this will form a chain, being the only element
-			 // in it means being the next yourself :)
-	return job;
-}
-
 struct job* job_create(uint64_t entry,
 		       uint64_t sp,
 		       const char* name,
@@ -46,6 +31,9 @@ struct job* job_create(uint64_t entry,
 	job->paging = paging;
 
 	// Adds the newly created job after the current one
+	if (current_job == NULL)
+		current_job = job;
+
 	struct job* save = current_job->next;
 	current_job->next = job;
 	job->next = save;
@@ -137,4 +125,33 @@ struct paging_manager* job_create_paging()
 	paging_manager_map_1gb(pm, 0x80000000, 0x80000000, 1, 0);
 
 	return pm;
+}
+
+struct job* job_create_from_file(struct inode* inode, const char* name)
+{
+	int file_size = fs_inode_left(inode);
+	char* init_mem = kalloc(file_size);
+	char* ptr = init_mem;
+	while (fs_inode_get(inode, ptr))
+		ptr++;
+
+	fs_inode_close(inode);
+
+	struct filebuffer fb = filebuffer_frombuffer(init_mem);
+
+	ELF elf = elf_fromfilebuffer(fb);
+	elf_alloc_and_parse(&elf);
+
+	int ph_count = elf_get_programheader_count(&elf);
+	ElfN_Phdr* program_header = elf_get_programheader_byid(&elf, 0);
+
+	struct paging_manager* pm = job_create_paging();
+
+	paging_manager_map_1gb(sysutils_get_paging_kernel(), 0x80000000,
+			       0x80000000, 0, 0);
+	elf_dump_program_content(&elf, program_header, (void*)0x80000000);
+	elf_free(&elf);
+
+	struct job* job = job_create(elf.header.e_entry, 0x80001000, name, pm);
+	return job;
 }

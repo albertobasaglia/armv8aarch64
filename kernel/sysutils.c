@@ -6,6 +6,7 @@
 #include <sysutils.h>
 
 static struct heap main_heap;
+static struct paging_manager paging_kernel;
 
 void sysutils_daif_set(int bit)
 {
@@ -119,4 +120,9 @@ void sysutils_log_free_heap()
 {
 	klogf("Free blocks: %q/%q", sysutils_kernel_heap_get_free_count(),
 	      sysutils_kernel_heap_get_total_count());
+}
+
+struct paging_manager* sysutils_get_paging_kernel()
+{
+	return &paging_kernel;
 }

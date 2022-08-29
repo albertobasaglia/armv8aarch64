@@ -44,4 +44,6 @@ size_t sysutils_kernel_heap_get_total_count();
 
 void sysutils_log_free_heap();
 
+struct paging_manager* sysutils_get_paging_kernel();
+
 #endif

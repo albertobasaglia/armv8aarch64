@@ -26,14 +26,6 @@ struct job {
 void job_init_slab(size_t max_jobs);
 
 /*
- * Inits the slab allocator and creates the first job.
- * */
-struct job* job_init_and_create(uint64_t entry,
-				uint64_t sp,
-				const char* name,
-				struct paging_manager* paging);
-
-/*
  * Adds a new job to the chain.
  * */
 struct job* job_create(uint64_t entry,
@@ -58,5 +50,7 @@ int job_add_file(struct job* job, struct inode* inode);
 struct inode* job_get_file(struct job* job, int fd);
 
 struct paging_manager* job_create_paging();
+
+struct job* job_create_from_file(struct inode* file, const char* name);
 
 #endif
