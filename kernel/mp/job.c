@@ -31,12 +31,14 @@ struct job* job_create(uint64_t entry,
 	job->paging = paging;
 
 	// Adds the newly created job after the current one
-	if (current_job == NULL)
+	if (current_job == NULL) {
 		current_job = job;
-
-	struct job* save = current_job->next;
-	current_job->next = job;
-	job->next = save;
+		current_job->next = job;
+	} else {
+		struct job* save = current_job->next;
+		current_job->next = job;
+		job->next = save;
+	}
 
 	strncpy(job->name, name, MAX_NAME_CHAR);
 
