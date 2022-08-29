@@ -1,3 +1,5 @@
+#include "log.h"
+#include "paging.h"
 #include <mp/job.h>
 #include <slab.h>
 #include <sysutils.h>
@@ -60,6 +62,29 @@ struct job* job_create(uint64_t entry,
 	return job;
 }
 
+void job_delete(struct job* job)
+{
+	struct job* last_ptr = current_job;
+	struct job* curr_ptr = current_job->next;
+
+	if (last_ptr == curr_ptr) {
+		klog("Trying to delete init job");
+		while (1)
+			;
+	}
+
+	while (curr_ptr != job) {
+		last_ptr = curr_ptr;
+		curr_ptr = curr_ptr->next;
+	}
+
+	last_ptr->next = curr_ptr->next;
+
+	kfree(job->paging);
+
+	slab_free(&job_slab, job);
+}
+
 void job_init_slab(size_t max_jobs)
 {
 	size_t size = slab_get_needed_size(sizeof(struct job), max_jobs);
@@ -98,4 +123,18 @@ struct inode* job_get_file(struct job* job, int fd)
 		return NULL;
 
 	return job->open_files[fd];
+}
+
+struct paging_manager* job_create_paging()
+{
+	struct paging_manager* pm = kalloc(sizeof(struct paging_manager));
+
+	paging_manager_init(pm, paging_get_slab());
+	paging_manager_map_kernel(
+	    pm); // every userprocess has the kernel mapped in!
+
+	// TODO get correct page size
+	paging_manager_map_1gb(pm, 0x80000000, 0x80000000, 1, 0);
+
+	return pm;
 }

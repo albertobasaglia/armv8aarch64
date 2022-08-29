@@ -120,20 +120,16 @@ void usermode()
 	klogf("Program header 0 size is %q", program_header->p_filesz);
 
 	// Create the job
-	struct paging_manager pm;
-	paging_manager_init(&pm, paging_get_slab());
-	paging_manager_map_kernel(
-	    &pm); // every userprocess has the kernel mapped in!
-	paging_manager_map_1gb(&pm, 0x80000000, 0x80000000, 1, 0);
 
 	paging_manager_map_1gb(&paging_kernel, 0x80000000, 0x80000000, 0, 0);
 	elf_dump_program_content(&elf, program_header, (void*)0x80000000);
 	elf_free(&elf);
 
 	klogf("Jumping to 0x%x (entry point)", elf.header.e_entry);
-	job_init_slab(32);
+	struct paging_manager* pm = job_create_paging();
+
 	struct job* init_job = job_init_and_create(elf.header.e_entry,
-						   0x80001000, "init", &pm);
+						   0x80001000, "init", pm);
 	scheduling_register_routine();
 	sysutils_log_free_heap();
 	sysutils_jump_eret_usermode(init_job);
@@ -176,10 +172,13 @@ void debug_paging()
 void start()
 {
 	klog("Kernel started");
+
 	sysutils_set_vbar((uint64_t)&EXCEPTION_TABLE);
+
 	setup_heap();
 	fs_init_slab();
 	paging_init_slab();
+	job_init_slab(128);
 
 	sysutils_mask_fiq(false);
 	sysutils_mask_irq(false);

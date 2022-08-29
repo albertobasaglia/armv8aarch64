@@ -41,6 +41,8 @@ struct job* job_create(uint64_t entry,
 		       const char* name,
 		       struct paging_manager* paging);
 
+void job_delete(struct job* job);
+
 /*
  * Returns the current job.
  * */
@@ -54,5 +56,7 @@ void job_forward();
 int job_add_file(struct job* job, struct inode* inode);
 
 struct inode* job_get_file(struct job* job, int fd);
+
+struct paging_manager* job_create_paging();
 
 #endif
