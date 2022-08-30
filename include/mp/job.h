@@ -1,13 +1,14 @@
 #ifndef MP_JOB_H
 #define MP_JOB_H
 
-#include "fs/fs.h"
+#include <fs/fs.h>
 #include <paging.h>
 #include <stdint.h>
 
 #define MAX_NAME_CHAR 30
 #define MAX_JOBS      256
 #define JOB_MAX_FILES 8
+#define JOB_BASE_USER 0x80000000
 
 struct job {
 	char name[MAX_NAME_CHAR];
@@ -24,6 +25,7 @@ struct job {
 };
 
 void job_init_slab(size_t max_jobs);
+void job_init_user_space(int blocks);
 
 /*
  * Adds a new job to the chain.
@@ -49,7 +51,7 @@ int job_add_file(struct job* job, struct inode* inode);
 
 struct inode* job_get_file(struct job* job, int fd);
 
-struct paging_manager* job_create_paging();
+struct paging_manager* job_create_paging(int size, int* allocated_size);
 
 struct job* job_create_from_file(struct inode* file, const char* name);
 

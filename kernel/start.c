@@ -42,7 +42,7 @@ void enable_gic()
 
 void setup_heap()
 {
-	int heap_size_blocks = 0x8000; // 128MB
+	int heap_size_blocks = 0x10000; // 256MB
 	size_t table_address = (size_t)&HEAP_START;
 	size_t heap_address = table_address + heap_table_size(heap_size_blocks);
 	sysutils_kernel_heap_create(table_address, heap_address,
@@ -92,6 +92,7 @@ void start()
 	fs_init_slab();
 	paging_init_slab();
 	job_init_slab(128);
+	job_init_user_space(0x1000);
 
 	sysutils_mask_fiq(false);
 	sysutils_mask_irq(false);
