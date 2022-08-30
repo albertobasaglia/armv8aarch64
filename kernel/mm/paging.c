@@ -1,11 +1,12 @@
-#include <sysutils.h>
 #include <log.h>
 #include <paging.h>
 #include <slab.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <sysutils.h>
 
 struct slab slab;
+struct paging_manager* current_paging_manager = NULL;
 
 uint64_t paging_l012_create_entry_block(uint64_t block_address,
 					int level,
@@ -68,6 +69,13 @@ void paging_set_ttbr0(uint64_t table_address)
 	asm volatile("msr TTBR0_EL1, %0" ::"r"(table_address));
 }
 
+uint64_t paging_get_ttbr0()
+{
+	uint64_t table_address;
+	asm volatile("mrs %0, TTBR0_EL1" : "=r"(table_address));
+	return table_address;
+}
+
 void paging_set_tcr()
 {
 	uint64_t tcr_ips = 0b10;
@@ -86,12 +94,16 @@ void paging_enable()
 		     "msr SCTLR_EL1, x0");
 }
 
-void paging_manager_apply(struct paging_manager* paging_manager)
+struct paging_manager* paging_manager_apply(
+    struct paging_manager* paging_manager)
 {
+	struct paging_manager* old = current_paging_manager;
+	current_paging_manager = paging_manager;
 	paging_set_ttbr0((uint64_t)paging_manager->l1);
 	paging_set_tcr();
 	paging_enable();
 	asm volatile("tlbi vmalle1");
+	return old;
 }
 
 void paging_manager_init(struct paging_manager* paging_manager,

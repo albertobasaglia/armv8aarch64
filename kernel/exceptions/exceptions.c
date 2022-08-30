@@ -1,9 +1,10 @@
 #include <fs/fs.h>
-#include <sysutils.h>
 #include <gic.h>
 #include <log.h>
 #include <mp/job.h>
 #include <stdbool.h>
+#include <string.h>
+#include <sysutils.h>
 #include <timer.h>
 #include <uart.h>
 
@@ -50,6 +51,22 @@ err:
 	REG(0) = -1;
 }
 
+void exceptions_internal_spawn(uint64_t* x30)
+{
+	struct filesystem* fs = fs_filesystem_getmain();
+	const char* filename = (const char*)REG(0);
+
+	// This is needed because the string is in the current process memory
+	char* copy_filename = kalloc(strlen(filename) + 1);
+	strcpy(copy_filename, filename);
+
+	struct inode* inode = fs->open(fs, copy_filename);
+
+	job_create_from_file(inode, copy_filename);
+
+	kfree(copy_filename);
+}
+
 bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30)
 {
 	int res;
@@ -58,7 +75,6 @@ bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30)
 		     "mrs %1, SPSR_EL1"
 		     : "=r"(lr), "=r"(spsr));
 
-	sysutils_mask_fiq(false);
 	if (imm == 10) {
 		// syscall exit: hang
 		klog("HANG");
@@ -74,6 +90,10 @@ bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30)
 		goto exit;
 	} else if (imm == 21) {
 		exceptions_internal_get(x30);
+		res = 1;
+		goto exit;
+	} else if (imm == 22) {
+		exceptions_internal_spawn(x30);
 		res = 1;
 		goto exit;
 	}
@@ -103,14 +123,15 @@ void exceptions_distributor(uint64_t* x30)
 		uint16_t imm16 = esr & ESR_ISS_SVC_IMM16;
 		/* klogf("Requested system call imm16: %q", imm16); */
 		bool res = exceptions_handle_syscall(imm16, x30);
-		if (!res) {
-			klogf("Unhandled syscall (imm=%q)", imm16);
-		}
+		if (res)
+			return;
+
+		klogf("Unhandled syscall (imm=%q)", imm16);
 	} else {
 		klogf("Unhandled exception (esr=0x%x)", esr);
-		while (1)
-			;
 	}
+	while (1)
+		;
 }
 
 uint64_t* exceptions_context_switch_x30;

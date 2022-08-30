@@ -1,7 +1,9 @@
+#include "sys.h"
+
 int main()
 {
-	asm volatile("svc 10");
-	while (1)
-		;
+	while (1) {
+		sys_log("hello!");
+	}
 	return 0;
 }

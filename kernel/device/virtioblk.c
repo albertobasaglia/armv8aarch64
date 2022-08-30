@@ -1,6 +1,6 @@
-#include <log.h>
 #include <gic.h>
 #include <heap.h>
+#include <log.h>
 #include <stddef.h>
 #include <sysutils.h>
 #include <uart.h>
@@ -163,11 +163,15 @@ int disk_create_request_sync(struct virtioblk* disk,
 
 	gic_redistributor_set_handler(79, handler, param);
 
+	sysutils_mask_fiq(false);
+
 	disk_set_reg(disk, VIRTIO_QUEUE_NOTIFY_OFFSET, 0);
 	mb();
 
 	while (!sync->done) {
 	}
+
+	sysutils_mask_fiq(true);
 
 	kfree((void*)sync);
 	return 0;

@@ -1,3 +1,4 @@
+#include <paging.h>
 #include <gic.h>
 #include <log.h>
 #include <mp/job.h>
@@ -11,9 +12,9 @@ void debug_job(struct job* job)
 {
 	klogf("pc: 0x%x", job->pc);
 	klogf("sp: 0x%x", job->sp);
-	/* for (int i = 0; i <= 30; i++) { */
-	/* 	klogf("x%q: %x", i, job->x[i]); */
-	/* } */
+	for (int i = 0; i <= 30; i++) {
+		klogf("x%q: %x", i, job->x[i]);
+	}
 }
 
 void scheduling_save_context(uint64_t* x30, struct job* job)
@@ -55,6 +56,8 @@ void internal_handler(int intid, void* args)
 
 	scheduling_restore_context(exceptions_context_switch_x30,
 				   job_get_current());
+
+	paging_manager_apply(job_get_current()->paging);
 }
 
 void scheduling_register_routine()

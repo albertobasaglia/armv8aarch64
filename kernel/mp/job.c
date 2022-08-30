@@ -1,8 +1,8 @@
 #include <elf/elf.h>
 #include <elf/filebuffer.h>
 #include <log.h>
-#include <paging.h>
 #include <mp/job.h>
+#include <paging.h>
 #include <slab.h>
 #include <sysutils.h>
 
@@ -181,9 +181,9 @@ struct job* job_create_from_file(struct inode* inode, const char* name)
 
 	// switch to the new job paging to load the program
 	// THIS IS VERY HARD ON TLB!!!
-	paging_manager_apply(pm);
+	struct paging_manager* old_paging = paging_manager_apply(pm);
 	elf_dump_program_content(&elf, program_header, (void*)JOB_BASE_USER);
-	paging_manager_apply(sysutils_get_paging_kernel());
+	paging_manager_apply(old_paging);
 	elf_free(&elf);
 
 	struct job* job = job_create(elf.header.e_entry,

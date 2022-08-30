@@ -89,7 +89,8 @@ struct paging_manager {
 /*
  * Configures registers to use this paging scheme.
  * */
-void paging_manager_apply(struct paging_manager* paging_manager);
+struct paging_manager* paging_manager_apply(
+    struct paging_manager* paging_manager);
 
 /*
  * Inits the struct and configures the first level page.
@@ -151,6 +152,5 @@ int paging_insert_or_alloc(struct paging_manager* paging_manager,
 void paging_init_slab();
 
 struct slab* paging_get_slab();
-
 
 #endif

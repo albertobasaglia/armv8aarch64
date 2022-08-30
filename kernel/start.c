@@ -74,7 +74,6 @@ void usermode()
 	fs_filesystem_setmain(fs);
 
 	struct inode* inode = fs->open(fs, "init.elf");
-
 	job_create_from_file(inode, "init");
 
 	scheduling_register_routine();
