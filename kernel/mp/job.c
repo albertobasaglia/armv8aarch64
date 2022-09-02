@@ -4,6 +4,7 @@
 #include <mp/job.h>
 #include <paging.h>
 #include <slab.h>
+#include <stdbool.h>
 #include <sysutils.h>
 
 #include <stdint.h>
@@ -27,6 +28,8 @@ struct job* job_create(uint64_t entry,
 		       struct paging_manager* paging)
 {
 	struct job* job = slab_allocate(&job_slab);
+
+	job->status = RUNNING;
 
 	job->pc = entry;
 	job->sp = sp;
@@ -56,8 +59,16 @@ struct job* job_create(uint64_t entry,
 
 void job_delete(struct job* job)
 {
+
 	struct job* last_ptr = current_job;
 	struct job* curr_ptr = current_job->next;
+
+	bool restore = false;
+	struct job* restore_job;
+	if (job == current_job) {
+		restore = true;
+		restore_job = current_job->next;
+	}
 
 	if (last_ptr == curr_ptr) {
 		klog("Trying to delete init job");
@@ -75,6 +86,10 @@ void job_delete(struct job* job)
 	kfree(job->paging);
 
 	slab_free(&job_slab, job);
+
+	if (restore) {
+		current_job = restore_job;
+	}
 }
 
 void job_init_slab(size_t max_jobs)
@@ -100,7 +115,18 @@ struct job* job_get_current()
 
 void job_forward()
 {
+	/*
+	 * For better performance this could be implemented
+	 * using different queues for different process states.
+	 * */
 	current_job = current_job->next;
+	while (current_job->status != RUNNING) {
+		if (current_job->status == TERMINATED) {
+			job_delete(current_job);
+		} else {
+			current_job = current_job->next;
+		}
+	}
 }
 
 int job_add_file(struct job* job, struct inode* inode)
@@ -189,4 +215,14 @@ struct job* job_create_from_file(struct inode* inode, const char* name)
 	struct job* job = job_create(elf.header.e_entry,
 				     JOB_BASE_USER + allocated_size, name, pm);
 	return job;
+}
+
+void job_terminate()
+{
+	current_job->status = TERMINATED;
+}
+
+void job_set_programcounter(struct job* job, uint64_t program_counter)
+{
+	job->pc = program_counter;
 }

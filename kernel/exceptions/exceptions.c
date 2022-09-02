@@ -75,27 +75,32 @@ bool exceptions_handle_syscall(uint16_t imm, uint64_t* x30)
 		     "mrs %1, SPSR_EL1"
 		     : "=r"(lr), "=r"(spsr));
 
-	if (imm == 10) {
-		// syscall exit: hang
-		klog("HANG");
-		while (1)
-			;
-	} else if (imm == 11) {
+	switch (imm) {
+	case 10: {
+		job_terminate();
+		res = 1;
+		goto exit;
+	}
+	case 11: {
 		klogf("'%s': '%s'", job_get_current()->name, REG(0));
 		res = 1;
 		goto exit;
-	} else if (imm == 20) {
+	}
+	case 20: {
 		exceptions_internal_open(x30);
 		res = 1;
 		goto exit;
-	} else if (imm == 21) {
+	}
+	case 21: {
 		exceptions_internal_get(x30);
 		res = 1;
 		goto exit;
-	} else if (imm == 22) {
+	}
+	case 22: {
 		exceptions_internal_spawn(x30);
 		res = 1;
 		goto exit;
+	}
 	}
 exit:
 	asm volatile("msr ELR_EL1, %0\n"
@@ -115,11 +120,15 @@ void exceptions_distributor(uint64_t* x30)
 	uint64_t esr = exceptions_getesr();
 	/* klogf("ESR: 0x%x", esr); */
 	uint64_t ec = (esr >> ESR_EC_OFFSET) & ESR_EC_MASK;
-	if (ec == ESR_EC_DATABT_SAME) {
+
+	switch (ec) {
+	case ESR_EC_DATABT_SAME: {
 		klog("Data abort from same EL");
-	} else if (ec == ESR_EC_DATABT_LOWER) {
+	}
+	case ESR_EC_DATABT_LOWER: {
 		klog("Data abort from lower EL");
-	} else if (ec == ESR_EC_SVC64) {
+	}
+	case ESR_EC_SVC64: {
 		uint16_t imm16 = esr & ESR_ISS_SVC_IMM16;
 		/* klogf("Requested system call imm16: %q", imm16); */
 		bool res = exceptions_handle_syscall(imm16, x30);
@@ -127,8 +136,10 @@ void exceptions_distributor(uint64_t* x30)
 			return;
 
 		klogf("Unhandled syscall (imm=%q)", imm16);
-	} else {
+	}
+	default: {
 		klogf("Unhandled exception (esr=0x%x)", esr);
+	}
 	}
 	while (1)
 		;

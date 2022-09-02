@@ -2,8 +2,6 @@
 
 int main()
 {
-	while (1) {
-		sys_log("hello!");
-	}
+	sys_log("Hello from spawned process!");
 	return 0;
 }

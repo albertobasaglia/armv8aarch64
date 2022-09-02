@@ -10,8 +10,16 @@
 #define JOB_MAX_FILES 8
 #define JOB_BASE_USER 0x80000000
 
+enum job_status {
+	RUNNING,
+	SLEEPING,
+	TERMINATED,
+};
+
 struct job {
 	char name[MAX_NAME_CHAR];
+
+	enum job_status status;
 
 	uint64_t x[31];
 	uint64_t pc;
@@ -54,5 +62,9 @@ struct inode* job_get_file(struct job* job, int fd);
 struct paging_manager* job_create_paging(int size, int* allocated_size);
 
 struct job* job_create_from_file(struct inode* file, const char* name);
+
+void job_terminate();
+
+void job_set_programcounter(struct job* job, uint64_t program_counter);
 
 #endif

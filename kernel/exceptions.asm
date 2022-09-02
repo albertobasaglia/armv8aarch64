@@ -1,6 +1,3 @@
-.section .data
-message: .asciz "Ciao!\n"
-
 .section .text
 
 //current_level_el0

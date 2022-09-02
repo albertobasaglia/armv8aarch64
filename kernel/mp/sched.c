@@ -1,8 +1,8 @@
-#include <paging.h>
 #include <gic.h>
 #include <log.h>
 #include <mp/job.h>
 #include <mp/sched.h>
+#include <paging.h>
 #include <stdint.h>
 #include <timer.h>
 
@@ -25,7 +25,7 @@ void scheduling_save_context(uint64_t* x30, struct job* job)
 		     "mrs %1, SP_EL0"
 		     : "=r"(program_counter), "=r"(stack_pointer));
 
-	job->pc = program_counter;
+	job_set_programcounter(job, program_counter);
 	job->sp = stack_pointer;
 	for (int i = 0; i <= 30; i++) {
 		job->x[i] = x30[30 - i];
@@ -36,6 +36,7 @@ void scheduling_restore_context(uint64_t* x30, struct job* job)
 {
 	uint64_t program_counter = job->pc;
 	uint64_t stack_pointer = job->sp;
+
 	for (int i = 0; i <= 30; i++) {
 		x30[30 - i] = job->x[i];
 	}
